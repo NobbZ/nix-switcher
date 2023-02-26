@@ -31,13 +31,13 @@
             translator = "cargo-lock";
           };
           packageOverrides.switcher-deps.add-openssl = {
-            nativeBuildInputs = self: (self) ++ [pkgs.pkg-config];
-            buildInputs = self:  [pkgs.openssl];
+            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
+            buildInputs = self: [pkgs.openssl];
           };
 
           packageOverrides.switcher.add-openssl = {
-            nativeBuildInputs = self: (self) ++ [pkgs.pkg-config];
-            buildInputs = self:  [pkgs.openssl];
+            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
+            buildInputs = self: [pkgs.openssl];
           };
         };
 
