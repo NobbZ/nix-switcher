@@ -4,8 +4,9 @@ use tokio::{self, process::Command};
 use tracing::{instrument, Level};
 use tracing_futures::Instrument;
 use tracing_subscriber::FmtSubscriber;
+use crate::provider::github;
 
-mod github;
+mod provider;
 
 const OWNER: &str = "nobbz";
 const REPO: &str = "nixos-config";
