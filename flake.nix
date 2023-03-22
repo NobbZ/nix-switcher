@@ -4,6 +4,8 @@
 
     flake-parts.url = "github:hercules-ci/flake-parts";
 
+    rust-overlay.url = "github:oxalica/rust-overlay";
+
     dream2nix.url = "github:nix-community/dream2nix";
     dream2nix.inputs.all-cabal-json.follows = "nixpkgs";
     dream2nix.inputs.nixpkgs.follows = "nixpkgs";
@@ -17,11 +19,17 @@
       imports = [inputs.dream2nix.flakeModuleBeta];
 
       perSystem = {
+        system,
         config,
         pkgs,
         self',
         ...
-      }: {
+      }: let
+        pkgsWithOverlays = inputs.nixpkgs.legacyPackages.${system}.extend inputs.rust-overlay.overlays.default;
+        rust = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain.toml";
+      in {
+        _module.args.pkgs = pkgsWithOverlays;
+
         formatter = pkgs.alejandra;
 
         dream2nix.inputs.self = {
@@ -39,6 +47,11 @@
             nativeBuildInputs = self: self ++ [pkgs.pkg-config];
             buildInputs = self: [pkgs.openssl];
           };
+
+          packageOverrides."^.*".set-toolchain = {
+            cargo = rust;
+            rustc = rust;
+          };
         };
 
         packages.switcher = config.dream2nix.outputs.self.packages.switcher;
@@ -46,7 +59,8 @@
 
         devShells.default = pkgs.mkShell {
           packages = builtins.attrValues {
-            inherit (pkgs) rustfmt rust-analyzer cargo-nextest cargo-audit cargo-deny cargo-tarpaulin nil rustc cargo pkg-config openssl;
+            inherit (pkgs) rustfmt rust-analyzer cargo-nextest cargo-audit cargo-deny cargo-tarpaulin nil pkg-config openssl;
+            inherit rust;
           };
         };
       };
