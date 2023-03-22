@@ -1,7 +1,7 @@
 use tracing::instrument;
 use url::Url;
 
-mod github;
+pub(crate) mod github;
 
 #[instrument]
 pub async fn retrieve_commit_identifier(url: &Url) -> String {
