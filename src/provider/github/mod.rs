@@ -9,7 +9,6 @@ use reqwest::{
 use serde::Deserialize;
 use tracing::instrument;
 
-use self::latest_commit::LatestCommit;
 use self::latest_commit_default_branch::LatestCommitDefaultBranch;
 
 const ENDPOINT: &str = "https://api.github.com/graphql";
@@ -37,8 +36,6 @@ where
     S2: AsRef<str> + Debug,
     S3: AsRef<str> + Debug,
 {
-    use latest_commit::LatestCommitRepositoryRefTarget::Commit;
-    use latest_commit::LatestCommitRepositoryRefTargetOnCommit;
     use latest_commit_default_branch::LatestCommitDefaultBranchRepositoryDefaultBranchRefTarget::Commit as CommitDefaultBranch;
     use latest_commit_default_branch::LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit;
 
@@ -56,28 +53,7 @@ where
         .build()?;
 
     if let Some(branch_name) = branch {
-        let variables = latest_commit::Variables {
-            repo: repo.as_ref().into(),
-            owner: owner.as_ref().into(),
-            branch: branch_name.as_ref().into(),
-        };
-
-        let target = post_graphql::<LatestCommit, _>(&client, ENDPOINT, variables)
-            .await?
-            .data
-            .ok_or_else(|| anyhow!("missing in response: data"))?
-            .repository
-            .ok_or_else(|| anyhow!("missing in response: repository"))?
-            .ref_
-            .ok_or_else(|| anyhow!("missing in response: ref"))?
-            .target
-            .ok_or_else(|| anyhow!("missing in response: target"))?;
-
-        if let Commit(LatestCommitRepositoryRefTargetOnCommit { oid }) = target {
-            Ok(oid)
-        } else {
-            Err(anyhow!("Not a commit: {:?}", target))
-        }
+        latest_commit::get_commit_sha(&client, repo, owner, branch_name).await
     } else {
         let variables = latest_commit_default_branch::Variables {
             repo: repo.as_ref().into(),

@@ -2,7 +2,6 @@ query LatestCommit($repo: String!, $owner: String!, $branch: String!) {
   repository(name: $repo, owner: $owner) {
     ref(qualifiedName: $branch) {
       id
-      name
       target {
         __typename
         ... on Commit {
