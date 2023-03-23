@@ -1,9 +1,11 @@
-use futures::future;
 use std::{error::Error, io::Error as IoError, path::Path, process::ExitStatus, str};
+
+use futures::future;
 use tokio::{self, process::Command};
 use tracing::{instrument, Level};
 use tracing_futures::Instrument;
 use tracing_subscriber::FmtSubscriber;
+
 use crate::provider::github;
 
 mod provider;
