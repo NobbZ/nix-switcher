@@ -1,0 +1,14 @@
+query LatestCommitDefaultBranch($repo: String!, $owner: String!) {
+  repository(name: $repo, owner: $owner) {
+    defaultBranchRef {
+      id
+      name
+      target {
+        __typename
+        ... on Commit {
+          oid
+        }
+      }
+    }
+  }
+}
