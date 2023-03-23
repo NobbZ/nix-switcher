@@ -22,7 +22,7 @@ async fn get_github_sha1(url: &Url) -> String {
         _ => unreachable!(),
     };
 
-    github::get_latest_commit(owner, repo, branch)
+    github::get_latest_commit(owner, repo, Some(branch))
         .await
         .unwrap()
 }

@@ -37,7 +37,11 @@ struct GhHost {
 }
 
 #[instrument]
-pub(crate) async fn get_latest_commit<S1, S2, S3>(owner: S1, repo: S2, branch: S3) -> Result<String>
+pub(crate) async fn get_latest_commit<S1, S2, S3>(
+    owner: S1,
+    repo: S2,
+    branch: Option<S3>,
+) -> Result<String>
 where
     S1: AsRef<str> + Debug,
     S2: AsRef<str> + Debug,
@@ -59,27 +63,31 @@ where
         .default_headers(headers)
         .build()?;
 
-    let variables = latest_commit::Variables {
-        repo: repo.as_ref().into(),
-        owner: owner.as_ref().into(),
-        branch: branch.as_ref().into(),
-    };
+    if let Some(branch_name) = branch {
+        let variables = latest_commit::Variables {
+            repo: repo.as_ref().into(),
+            owner: owner.as_ref().into(),
+            branch: branch_name.as_ref().into(),
+        };
 
-    let target = post_graphql::<LatestCommit, _>(&client, ENDPOINT, variables)
-        .await?
-        .data
-        .ok_or_else(|| anyhow!("missing in response: data"))?
-        .repository
-        .ok_or_else(|| anyhow!("missing in response: repository"))?
-        .ref_
-        .ok_or_else(|| anyhow!("missing in response: ref"))?
-        .target
-        .ok_or_else(|| anyhow!("missing in response: target"))?;
+        let target = post_graphql::<LatestCommit, _>(&client, ENDPOINT, variables)
+            .await?
+            .data
+            .ok_or_else(|| anyhow!("missing in response: data"))?
+            .repository
+            .ok_or_else(|| anyhow!("missing in response: repository"))?
+            .ref_
+            .ok_or_else(|| anyhow!("missing in response: ref"))?
+            .target
+            .ok_or_else(|| anyhow!("missing in response: target"))?;
 
-    if let Commit(LatestCommitRepositoryRefTargetOnCommit { oid }) = target {
-        Ok(oid)
+        if let Commit(LatestCommitRepositoryRefTargetOnCommit { oid }) = target {
+            Ok(oid)
+        } else {
+            Err(anyhow!("Not a commit: {:?}", target))
+        }
     } else {
-        Err(anyhow!("Not a commit: {:?}", target))
+        unimplemented!("Missing branch is not yet implemented")
     }
 }
 

@@ -29,7 +29,7 @@ async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus, IoError> {
 
 #[instrument]
 async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> String {
-    github::get_latest_commit(owner, repo, branch)
+    github::get_latest_commit(owner, repo, Some(branch))
         .await
         .unwrap()
 }
