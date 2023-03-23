@@ -40,12 +40,6 @@ where
 
     let auth = get_gh_creds();
 
-    let variables = latest_commit::Variables {
-        repo: repo.as_ref().into(),
-        owner: owner.as_ref().into(),
-        branch: branch.as_ref().into(),
-    };
-
     let mut headers = HeaderMap::new();
     headers.insert(
         "Authorization",
@@ -56,6 +50,12 @@ where
         .user_agent("nobbz switcher/0.0")
         .default_headers(headers)
         .build()?;
+
+    let variables = latest_commit::Variables {
+        repo: repo.as_ref().into(),
+        owner: owner.as_ref().into(),
+        branch: branch.as_ref().into(),
+    };
 
     let target = post_graphql::<LatestCommit, _>(&client, ENDPOINT, variables)
         .await?
