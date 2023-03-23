@@ -47,8 +47,10 @@ where
     S2: AsRef<str> + Debug,
     S3: AsRef<str> + Debug,
 {
-    use latest_commit::LatestCommitRepositoryRefTarget::*;
+    use latest_commit::LatestCommitRepositoryRefTarget::Commit;
     use latest_commit::LatestCommitRepositoryRefTargetOnCommit;
+    use latest_commit_default_branch::LatestCommitDefaultBranchRepositoryDefaultBranchRefTarget::Commit as CommitDefaultBranch;
+    use latest_commit_default_branch::LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit;
 
     let auth = get_gh_creds();
 
@@ -87,7 +89,30 @@ where
             Err(anyhow!("Not a commit: {:?}", target))
         }
     } else {
-        unimplemented!("Missing branch is not yet implemented")
+        let variables = latest_commit_default_branch::Variables {
+            repo: repo.as_ref().into(),
+            owner: owner.as_ref().into(),
+        };
+
+        let target = post_graphql::<LatestCommitDefaultBranch, _>(&client, ENDPOINT, variables)
+            .await?
+            .data
+            .ok_or_else(|| anyhow!("missing in response: data"))?
+            .repository
+            .ok_or_else(|| anyhow!("missing in response: repository"))?
+            .default_branch_ref
+            .ok_or_else(|| anyhow!("missing in response: ref"))?
+            .target
+            .ok_or_else(|| anyhow!("missing in response: target"))?;
+
+        if let CommitDefaultBranch(
+            LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit { oid },
+        ) = target
+        {
+            Ok(oid)
+        } else {
+            Err(anyhow!("Not a commit: {:?}", target))
+        }
     }
 }
 
