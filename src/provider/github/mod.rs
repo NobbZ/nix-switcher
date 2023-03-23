@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Debug};
 
 use anyhow::{anyhow, Result};
-use graphql_client::{reqwest::post_graphql, GraphQLQuery};
+use graphql_client::reqwest::post_graphql;
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -9,25 +9,15 @@ use reqwest::{
 use serde::Deserialize;
 use tracing::instrument;
 
+use self::latest_commit::LatestCommit;
+use self::latest_commit_default_branch::LatestCommitDefaultBranch;
+
 const ENDPOINT: &str = "https://api.github.com/graphql";
 
 type GitObjectID = String;
 
-#[derive(GraphQLQuery)]
-#[graphql(
-    query_path = "src/provider/github/get_commit_sha.graphql",
-    schema_path = "src/provider/github/schema_gh.graphql",
-    response_derives = "Debug"
-)]
-pub(crate) struct LatestCommit;
-
-#[derive(GraphQLQuery)]
-#[graphql(
-    query_path = "src/provider/github/get_commit_sha_default_branch.graphql",
-    schema_path = "src/provider/github/schema_gh.graphql",
-    response_derives = "Debug"
-)]
-pub(crate) struct LatestCommitDefaultBranch;
+pub(self) mod latest_commit;
+pub(self) mod latest_commit_default_branch;
 
 #[derive(Deserialize, Clone)]
 struct GhHost {
