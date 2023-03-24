@@ -49,6 +49,17 @@ async fn get_tempfldr() -> String {
     get_command_out(Command::new("mktemp").arg("-d")).await
 }
 
+#[instrument]
+async fn check_nom() -> Option<String> {
+    let location = get_command_out(Command::new("which").arg("nom")).await;
+
+    if location.is_empty() {
+        return None;
+    }
+
+    Some(location)
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
@@ -59,13 +70,24 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let host_promise = get_hostname();
     let user_promise = get_username();
     let temp_promise = get_tempfldr();
+    let nom_promise = check_nom();
 
-    let (sha1, host, user, temp) =
-        future::join4(sha1_promise, host_promise, user_promise, temp_promise)
-            .instrument(tracing::trace_span!("gather_info"))
-            .await;
+    let (sha1, host, user, temp, nom) = future::join5(
+        sha1_promise,
+        host_promise,
+        user_promise,
+        temp_promise,
+        nom_promise,
+    )
+    .instrument(tracing::trace_span!("gather_info"))
+    .await;
 
-    tracing::info!(%sha1, %host, %user, %temp, "Gathered info");
+    tracing::info!(%sha1, %host, %user, %temp, ?nom, "Gathered info");
+
+    if nom.is_none() {
+        panic!("Nix output monitor not found");
+    }
+
     tracing::info!("Building strings");
 
     let flake_url = format!("github:{}/{}?ref={}", OWNER, REPO, sha1);
@@ -84,23 +106,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tracing::info!(%flake_url, %nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
     tracing::info!("Starting to build");
 
-    spawn_command(
-        Command::new("bash").arg("-c").arg(
-            [
-                "nix",
-                "build",
-                "--keep-going",
-                "-L",
-                "--out-link",
-                out_link.as_os_str().to_str().unwrap(),
-                &nixos_config,
-                &home_config,
-                "|&",
-                "nom",
-            ]
-            .join(" "),
-        ),
-    )
+    spawn_command(Command::new("nom").args([
+        "build",
+        "--keep-going",
+        "-L",
+        "--out-link",
+        out_link.as_os_str().to_str().unwrap(),
+        &nixos_config,
+        &home_config,
+    ]))
     .instrument(tracing::debug_span!("nom_build"))
     .await?;
 
