@@ -84,23 +84,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tracing::info!(%flake_url, %nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
     tracing::info!("Starting to build");
 
-    spawn_command(
-        Command::new("bash").arg("-c").arg(
-            [
-                "nix",
-                "build",
-                "--keep-going",
-                "-L",
-                "--out-link",
-                out_link.as_os_str().to_str().unwrap(),
-                &nixos_config,
-                &home_config,
-                "|&",
-                "nom",
-            ]
-            .join(" "),
-        ),
-    )
+    spawn_command(Command::new("nom").args([
+        "build",
+        "--keep-going",
+        "-L",
+        "--out-link",
+        out_link.as_os_str().to_str().unwrap(),
+        &nixos_config,
+        &home_config,
+    ]))
     .instrument(tracing::debug_span!("nom_build"))
     .await?;
 
