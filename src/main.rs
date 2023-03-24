@@ -62,7 +62,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let (sha1, host, user, temp) =
         future::join4(sha1_promise, host_promise, user_promise, temp_promise)
-            .instrument(tracing::trace_span!("join4"))
+            .instrument(tracing::trace_span!("gather_info"))
             .await;
 
     tracing::info!(%sha1, %host, %user, %temp, "Gathered info");
@@ -101,6 +101,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
             .join(" "),
         ),
     )
+    .instrument(tracing::debug_span!("nom_build"))
     .await?;
 
     tracing::info!("Finished building");
@@ -112,12 +113,15 @@ async fn main() -> Result<(), Box<dyn Error>> {
         "--flake",
         &nixos_rebuild,
     ]))
+    .instrument(tracing::debug_span!("nixos_switch"))
     .await?;
 
     tracing::info!(%host, "Switched system configuration");
     tracing::info!(%user, %host, "Switching user configuration");
 
-    spawn_command(Command::new("home-manager").args(["switch", "--flake", &home_manager])).await?;
+    spawn_command(Command::new("home-manager").args(["switch", "--flake", &home_manager]))
+        .instrument(tracing::debug_span!("home_switch"))
+        .await?;
 
     tracing::info!(%user, %host, "Switched user configuration");
     tracing::info!(%temp, "Cleaning up");
