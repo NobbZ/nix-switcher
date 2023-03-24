@@ -1,7 +1,8 @@
-query LatestCommit($repo: String!, $owner: String!, $branch: String!) {
+query LatestCommitDefaultBranch($repo: String!, $owner: String!) {
   repository(name: $repo, owner: $owner) {
-    ref(qualifiedName: $branch) {
+    defaultBranchRef {
       id
+      name
       target {
         __typename
         ... on Commit {
