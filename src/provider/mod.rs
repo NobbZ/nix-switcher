@@ -1,7 +1,7 @@
 use tracing::instrument;
 use url::Url;
 
-mod github;
+pub(crate) mod github;
 
 #[instrument]
 pub async fn retrieve_commit_identifier(url: &Url) -> String {
@@ -22,7 +22,7 @@ async fn get_github_sha1(url: &Url) -> String {
         _ => unreachable!(),
     };
 
-    github::get_latest_commit(owner, repo, branch)
+    github::get_latest_commit(owner, repo, Some(branch))
         .await
         .unwrap()
 }

@@ -1,7 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
 use anyhow::{anyhow, Result};
-use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
@@ -13,13 +12,8 @@ const ENDPOINT: &str = "https://api.github.com/graphql";
 
 type GitObjectID = String;
 
-#[derive(GraphQLQuery)]
-#[graphql(
-    query_path = "src/provider/github/get_commit_sha.graphql",
-    schema_path = "src/provider/github/schema_gh.graphql",
-    response_derives = "Debug"
-)]
-pub(crate) struct LatestCommit;
+pub(self) mod latest_commit;
+pub(self) mod latest_commit_default_branch;
 
 #[derive(Deserialize, Clone)]
 struct GhHost {
@@ -29,22 +23,17 @@ struct GhHost {
 }
 
 #[instrument]
-pub(crate) async fn get_latest_commit<S1, S2, S3>(owner: S1, repo: S2, branch: S3) -> Result<String>
+pub(crate) async fn get_latest_commit<S1, S2, S3>(
+    owner: S1,
+    repo: S2,
+    branch: Option<S3>,
+) -> Result<String>
 where
     S1: AsRef<str> + Debug,
     S2: AsRef<str> + Debug,
     S3: AsRef<str> + Debug,
 {
-    use latest_commit::LatestCommitRepositoryRefTarget::*;
-    use latest_commit::LatestCommitRepositoryRefTargetOnCommit;
-
     let auth = get_gh_creds();
-
-    let variables = latest_commit::Variables {
-        repo: repo.as_ref().into(),
-        owner: owner.as_ref().into(),
-        branch: branch.as_ref().into(),
-    };
 
     let mut headers = HeaderMap::new();
     headers.insert(
@@ -57,21 +46,10 @@ where
         .default_headers(headers)
         .build()?;
 
-    let target = post_graphql::<LatestCommit, _>(&client, ENDPOINT, variables)
-        .await?
-        .data
-        .ok_or_else(|| anyhow!("missing in response: data"))?
-        .repository
-        .ok_or_else(|| anyhow!("missing in response: repository"))?
-        .ref_
-        .ok_or_else(|| anyhow!("missing in response: ref"))?
-        .target
-        .ok_or_else(|| anyhow!("missing in response: target"))?;
-
-    if let Commit(LatestCommitRepositoryRefTargetOnCommit { oid }) = target {
-        Ok(oid)
+    if let Some(branch_name) = branch {
+        latest_commit::get_commit_sha(&client, repo, owner, branch_name).await
     } else {
-        Err(anyhow!("Not a commit: {:?}", target))
+        latest_commit_default_branch::get_commit_sha(&client, repo, owner).await
     }
 }
 
