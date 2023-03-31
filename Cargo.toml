@@ -7,19 +7,22 @@ rust-version = "1.71.1"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+clap = { version = "4.1.13", features = ["derive", "env"] }
+color-eyre = "0.6.3"
+eyre = "0.6.12"
+futures = "0.3.30"
+graphql_client = { version = "0.14.0", features = ["reqwest"] }
+reqwest = "0.11.27"
 serde = "1.0.194"
 serde_json = "1.0.110"
-serde_yaml = "0.9.30"
-futures = "0.3.30"
+serde_yaml = "0.9.34"
 tracing = "0.1.40"
 tracing-futures = "0.2.5"
-tracing-subscriber = "0.3.18"
-graphql_client = { version = "0.14.0", features = ["reqwest"] }
-reqwest = "0.11.23"
+tracing-subscriber = { version = "0.3.18", features = ["json"] }
 url = "2.5.0"
-eyre = "0.6.12"
-color-eyre = "0.6.3"
 
 [dependencies.tokio]
-version = "1"
+version = "1.41.1"
 features = ["full"]
+
+
