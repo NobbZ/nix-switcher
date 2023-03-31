@@ -1,13 +1,16 @@
-use std::{error::Error, io::Error as IoError, path::Path, process::ExitStatus, str};
+use std::{io::Error as IoError, path::Path, process::ExitStatus, str};
 
+use anyhow::{anyhow, Result};
+use clap::Parser;
 use futures::future;
 use tokio::{self, process::Command};
 use tracing::{instrument, Level};
 use tracing_futures::Instrument;
 use tracing_subscriber::FmtSubscriber;
 
-use crate::provider::github;
+use crate::{interface::SwitcherParser, provider::github};
 
+mod interface;
 mod provider;
 
 const OWNER: &str = "nobbz";
@@ -61,9 +64,30 @@ async fn check_nom() -> Option<String> {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
-    FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
+async fn main() -> Result<()> {
+    let args = <SwitcherParser as Parser>::parse();
 
+    let max_level = match (&args.quiet, &args.verbose) {
+        (true, 0) => Ok(Level::WARN),
+        (false, 0) => Ok(Level::INFO),
+        (false, 1) => Ok(Level::DEBUG),
+        (false, 2) => Ok(Level::TRACE),
+        (false, verb) => Err(anyhow!("Verbosity max is 2, {} was requested", verb)),
+        (true, _) => Err(anyhow!("--quiet and --verbose are mutually exclusive")),
+    }?;
+
+    let builder = FmtSubscriber::builder().with_max_level(max_level);
+    match &args.format {
+        interface::LogFormat::Compact => builder.compact().init(),
+        interface::LogFormat::Pretty => builder.pretty().init(),
+        interface::LogFormat::JSON => builder.json().init(),
+    };
+
+    tracing::info!(
+        "{name} v{version}",
+        name = env!("CARGO_PKG_NAME"),
+        version = env!("CARGO_PKG_VERSION")
+    );
     tracing::info!("Gathering info");
 
     let sha1_promise = retrieve_sha(OWNER, REPO, BRANCH);
