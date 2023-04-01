@@ -19,6 +19,7 @@
         inputs',
         self',
         pkgs,
+        lib,
         ...
       }: let
         inherit (inputs'.nixpkgs.legacyPackages.lib) pipe;
@@ -46,6 +47,8 @@
 
         packages.switcher = (self'.legacyPackages.switcherPkgsBuilder.workspace.switcher {}).bin;
         packages.default = self'.packages.switcher;
+
+        checks.switcher = self'.packages.switcher;
 
         devShells.default = pkgs.mkShell {
           packages = builtins.attrValues {
