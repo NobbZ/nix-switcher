@@ -1,6 +1,11 @@
 CHANGELOG
 =========
 
+upcoming (…)
+------------
+
+* `complete` subcommand to generate shell completions
+
 0.2.4 (2023-03-24)
 ------------------
 
