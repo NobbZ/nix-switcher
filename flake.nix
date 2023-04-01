@@ -70,9 +70,9 @@
           ];
 
         packages.switcher = config.dream2nix.outputs.self.packages.switcher;
-        packages.default = self'.packages.switcher;
+        packages.default = config.packages.switcher;
 
-        checks.switcher = self'.packages.switcher;
+        checks.switcher = config.packages.switcher;
         checks.minimal = config.dream2nix.outputs.minimal-rust.packages.switcher;
 
         devShells.default = pkgs.mkShell {
