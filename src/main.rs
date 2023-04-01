@@ -11,8 +11,12 @@ use tracing_subscriber::FmtSubscriber;
 
 use eyre::{eyre, ContextCompat, Result, WrapErr};
 
-use crate::{interface::SwitcherParser, provider::github};
+use crate::{
+    interface::{SwitcherCommand, SwitcherParser},
+    provider::github,
+};
 
+mod cmd;
 mod interface;
 mod provider;
 
@@ -96,6 +100,11 @@ async fn main() -> Result<()> {
         interface::LogFormat::Pretty => builder.pretty().init(),
         interface::LogFormat::Json => builder.json().init(),
     };
+
+    if let SwitcherCommand::Complete(_) = args.command {
+        cmd::complete::run(args).await?;
+        return Ok(());
+    }
 
     tracing::info!(
         "{name} v{version}",

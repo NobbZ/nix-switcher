@@ -3,6 +3,7 @@
 
 use clap::ArgAction::Count;
 use clap::{Args, Parser, Subcommand, ValueEnum};
+use clap_complete::Shell as ClapShell;
 
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
@@ -35,10 +36,11 @@ pub enum LogFormat {
 #[derive(Debug, Subcommand)]
 pub enum SwitcherCommand {
     Build(BuildArgs),
+    Complete(CompleteArgs),
 }
 
 #[derive(Debug, Args)]
-/// Builds a system and
+/// Builds a system and switch to its configuration
 pub struct BuildArgs {
     #[arg(short = 'H', long)]
     /// Host to build (will default to the current system)
@@ -55,4 +57,37 @@ pub struct BuildArgs {
     #[arg(long, default_value_t = false)]
     /// try to find all the hosts and build them
     pub all_systems: bool,
+}
+
+#[derive(Debug, Args)]
+/// Generate a completion for the requested shell
+pub struct CompleteArgs {
+    #[arg()]
+    /// The shell to generate completions for
+    pub shell: Shell,
+
+    #[arg(short = 'F', long)]
+    /// File to write to, if missing `stdout` is used
+    pub file: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+pub enum Shell {
+    Bash,
+    Elvish,
+    Fish,
+    PowerShell,
+    Zsh,
+}
+
+impl From<Shell> for ClapShell {
+    fn from(val: Shell) -> Self {
+        match val {
+            Shell::Bash => ClapShell::Bash,
+            Shell::Elvish => ClapShell::Elvish,
+            Shell::Fish => ClapShell::Fish,
+            Shell::PowerShell => ClapShell::PowerShell,
+            Shell::Zsh => ClapShell::Zsh,
+        }
+    }
 }

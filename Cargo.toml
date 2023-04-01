@@ -8,6 +8,7 @@ rust-version = "1.71.1"
 
 [dependencies]
 clap = { version = "4.1.13", features = ["derive", "env"] }
+clap_complete = "4.2.0"
 color-eyre = "0.6.3"
 eyre = "0.6.12"
 futures = "0.3.30"
