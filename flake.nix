@@ -29,6 +29,21 @@
         pkgsWithOverlays = inputs.nixpkgs.legacyPackages.${system}.extend inputs.rust-overlay.overlays.default;
         rust = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain.toml";
         rust-min = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain-min.toml";
+
+        withCompletions = switcher: shells: let
+          completionBuilder = shell:
+            pkgs.runCommand "${switcher.pname}-${shell}-${switcher.version}" {nativeBuildInputs = [pkgs.installShellFiles];} ''
+              ${lib.getExe switcher} complete ${shell} --file switcher.${shell}
+              installShellCompletion switcher.${shell}
+            '';
+          completions = builtins.map completionBuilder shells;
+          name = "${switcher.pname}-${switcher.version}";
+        in
+          pkgs.symlinkJoin {
+            inherit name;
+
+            paths = [switcher] ++ completions;
+          };
       in {
         _module.args.pkgs = pkgsWithOverlays;
 
@@ -49,6 +64,15 @@
             packageOverrides.switcher.add-openssl = {
               nativeBuildInputs = self: self ++ [pkgs.pkg-config];
               buildInputs = self: [pkgs.openssl];
+              overrideAttrs = self:
+                self
+                // {
+                  meta =
+                    (self.meta or {})
+                    // {
+                      mainProgram = "switcher";
+                    };
+                };
             };
           };
 
@@ -69,7 +93,8 @@
             (makeInput "minimal-rust" rust-min)
           ];
 
-        packages.switcher = config.dream2nix.outputs.self.packages.switcher;
+        packages.switcher-no-completion = config.dream2nix.outputs.self.packages.switcher;
+        packages.switcher = withCompletions config.packages.switcher-no-completion ["bash" "fish" "zsh"];
         packages.default = config.packages.switcher;
 
         checks.switcher = config.packages.switcher;
