@@ -23,10 +23,12 @@
         config,
         pkgs,
         self',
+        lib,
         ...
       }: let
         pkgsWithOverlays = inputs.nixpkgs.legacyPackages.${system}.extend inputs.rust-overlay.overlays.default;
         rust = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain.toml";
+        rust-min = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain-min.toml";
       in {
         _module.args.pkgs = pkgsWithOverlays;
 
@@ -53,9 +55,32 @@
             rustc = rust;
           };
         };
+        dream2nix.inputs.self2 = {
+          source = inputs.self;
+          projects.switcher = {
+            subsystem = "rust";
+            translator = "cargo-lock";
+          };
+          packageOverrides.switcher-deps.add-openssl = {
+            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
+            buildInputs = self: [pkgs.openssl];
+          };
+
+          packageOverrides.switcher.add-openssl = {
+            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
+            buildInputs = self: [pkgs.openssl];
+          };
+          packageOverrides."^.*".set-toolchain2 = {
+            cargo = rust-min;
+            rustc = rust-min;
+          };
+        };
 
         packages.switcher = config.dream2nix.outputs.self.packages.switcher;
         packages.default = self'.packages.switcher;
+
+        checks.switcher = self'.packages.switcher;
+        checks.minimal = config.dream2nix.outputs.self2.packages.switcher;
 
         devShells.default = pkgs.mkShell {
           packages = builtins.attrValues {
