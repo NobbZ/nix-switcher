@@ -48,8 +48,6 @@
         packages.switcher = (self'.legacyPackages.switcherPkgsBuilder.workspace.switcher {}).bin;
         packages.default = self'.packages.switcher;
 
-        checks.switcher = self'.packages.switcher;
-
         devShells.default = pkgs.mkShell {
           packages = builtins.attrValues {
             inherit (pkgs) cargo-nextest cargo-audit cargo-deny cargo-tarpaulin rust-analyzer;
