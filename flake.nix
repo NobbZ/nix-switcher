@@ -34,53 +34,46 @@
 
         formatter = pkgs.alejandra;
 
-        dream2nix.inputs.self = {
-          source = inputs.self;
-          projects.switcher = {
-            subsystem = "rust";
-            translator = "cargo-lock";
-          };
-          packageOverrides.switcher-deps.add-openssl = {
-            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
-            buildInputs = self: [pkgs.openssl];
+        dream2nix.inputs = let
+          commonData = {
+            source = inputs.self;
+            projects.switcher = {
+              subsystem = "rust";
+              translator = "cargo-lock";
+            };
+            packageOverrides.switcher-deps.add-openssl = {
+              nativeBuildInputs = self: self ++ [pkgs.pkg-config];
+              buildInputs = self: [pkgs.openssl];
+            };
+
+            packageOverrides.switcher.add-openssl = {
+              nativeBuildInputs = self: self ++ [pkgs.pkg-config];
+              buildInputs = self: [pkgs.openssl];
+            };
           };
 
-          packageOverrides.switcher.add-openssl = {
-            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
-            buildInputs = self: [pkgs.openssl];
+          makeInput = name: rust: {
+            "${name}" = lib.mkMerge [
+              commonData
+              {
+                packageOverrides."^.*".set-toolchain = {
+                  cargo = rust;
+                  rustc = rust;
+                };
+              }
+            ];
           };
-
-          packageOverrides."^.*".set-toolchain = {
-            cargo = rust;
-            rustc = rust;
-          };
-        };
-        dream2nix.inputs.self2 = {
-          source = inputs.self;
-          projects.switcher = {
-            subsystem = "rust";
-            translator = "cargo-lock";
-          };
-          packageOverrides.switcher-deps.add-openssl = {
-            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
-            buildInputs = self: [pkgs.openssl];
-          };
-
-          packageOverrides.switcher.add-openssl = {
-            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
-            buildInputs = self: [pkgs.openssl];
-          };
-          packageOverrides."^.*".set-toolchain2 = {
-            cargo = rust-min;
-            rustc = rust-min;
-          };
-        };
+        in
+          lib.mkMerge [
+            (makeInput "self" rust)
+            (makeInput "minimal-rust" rust-min)
+          ];
 
         packages.switcher = config.dream2nix.outputs.self.packages.switcher;
         packages.default = self'.packages.switcher;
 
         checks.switcher = self'.packages.switcher;
-        checks.minimal = config.dream2nix.outputs.self2.packages.switcher;
+        checks.minimal = config.dream2nix.outputs.minimal-rust.packages.switcher;
 
         devShells.default = pkgs.mkShell {
           packages = builtins.attrValues {
