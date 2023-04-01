@@ -94,7 +94,7 @@
           ];
 
         packages.switcher-no-completion = config.dream2nix.outputs.self.packages.switcher;
-        packages.switcher = withCompletions config.packages.switcher-no-completion ["bash" "fish" "zsh"];
+        packages.switcher = lib.makeOverridable ({shells}: withCompletions config.packages.switcher-no-completion shells) {shells = ["bash" "fish" "zsh"];};
         packages.default = config.packages.switcher;
 
         checks.switcher = config.packages.switcher;
