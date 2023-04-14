@@ -1,20 +1,20 @@
 [package]
 name = "switcher"
-version = "0.2.4"
+version = "0.2.5"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde = "1.0.158"
-serde_json = "1.0.94"
+serde = "1.0.159"
+serde_json = "1.0.95"
 serde_yaml = "0.9.19"
-futures = "0.3.27"
+futures = "0.3.28"
 tracing = "0.1.37"
 tracing-futures = "0.2.5"
 tracing-subscriber = "0.3.16"
 graphql_client = { version = "0.12.0", features = ["reqwest"] }
-reqwest = "0.11.15"
+reqwest = "0.11.16"
 anyhow = "1.0.70"
 url = "2.3.1"
 
