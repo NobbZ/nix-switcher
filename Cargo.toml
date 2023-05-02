@@ -12,7 +12,7 @@ serde_yaml = "0.9.21"
 futures = "0.3.28"
 tracing = "0.1.37"
 tracing-futures = "0.2.5"
-tracing-subscriber = "0.3.16"
+tracing-subscriber = "0.3.17"
 graphql_client = { version = "0.12.0", features = ["reqwest"] }
 reqwest = "0.11.16"
 anyhow = "1.0.70"
