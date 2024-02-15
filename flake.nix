@@ -6,60 +6,51 @@
 
     rust-overlay.url = "github:oxalica/rust-overlay";
 
-    dream2nix.url = "github:nix-community/dream2nix";
-    dream2nix.inputs.all-cabal-json.follows = "nixpkgs";
-    dream2nix.inputs.nixpkgs.follows = "nixpkgs";
-    dream2nix.inputs.flake-parts.follows = "flake-parts";
+    cargo2nix.url = "github:cargo2nix/cargo2nix";
+    cargo2nix.inputs.nixpkgs.follows = "nixpkgs";
+    cargo2nix.inputs.rust-overlay.follows = "rust-overlay";
   };
 
   outputs = {flake-parts, ...} @ inputs:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-linux"];
 
-      imports = [inputs.dream2nix.flakeModuleBeta];
-
       perSystem = {
-        system,
-        config,
-        pkgs,
+        inputs',
         self',
+        pkgs,
         ...
       }: let
-        pkgsWithOverlays = inputs.nixpkgs.legacyPackages.${system}.extend inputs.rust-overlay.overlays.default;
+        inherit (inputs'.nixpkgs.legacyPackages.lib) pipe;
+
+        pkgsWithOverlays = inputs'.nixpkgs.legacyPackages.lib.pipe inputs'.nixpkgs.legacyPackages [
+          (pkgs: pkgs.extend inputs.rust-overlay.overlays.default)
+          (pkgs: pkgs.extend inputs.cargo2nix.overlays.default)
+        ];
+
         rust = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain.toml";
+        rustVersion = pipe "${inputs.self}/rust-toolchain.toml" [
+          builtins.readFile
+          builtins.fromTOML
+          (toml: toml.toolchain.channel)
+        ];
       in {
         _module.args.pkgs = pkgsWithOverlays;
 
         formatter = pkgs.alejandra;
 
-        dream2nix.inputs.self = {
-          source = inputs.self;
-          projects.switcher = {
-            subsystem = "rust";
-            translator = "cargo-lock";
-          };
-          packageOverrides.switcher-deps.add-openssl = {
-            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
-            buildInputs = self: [pkgs.openssl];
-          };
-
-          packageOverrides.switcher.add-openssl = {
-            nativeBuildInputs = self: self ++ [pkgs.pkg-config];
-            buildInputs = self: [pkgs.openssl];
-          };
-
-          packageOverrides."^.*".set-toolchain = {
-            cargo = rust;
-            rustc = rust;
-          };
+        legacyPackages.switcherPkgsBuilder = pkgs.rustBuilder.makePackageSet {
+          inherit rustVersion;
+          packageFun = import "${inputs.self}/Cargo.nix";
         };
 
-        packages.switcher = config.dream2nix.outputs.self.packages.switcher;
+        packages.switcher = (self'.legacyPackages.switcherPkgsBuilder.workspace.switcher {}).bin;
         packages.default = self'.packages.switcher;
 
         devShells.default = pkgs.mkShell {
           packages = builtins.attrValues {
-            inherit (pkgs) cargo-nextest cargo-audit cargo-deny cargo-tarpaulin nil pkg-config openssl;
+            inherit (pkgs) cargo-nextest cargo-audit cargo-deny cargo-tarpaulin rust-analyzer;
+            inherit (pkgs) nil pkg-config openssl;
             inherit rust;
           };
         };
