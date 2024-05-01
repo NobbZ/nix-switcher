@@ -19,5 +19,5 @@ anyhow = "1.0.79"
 url = "2.5.0"
 
 [dependencies.tokio]
-version = "1"
+version = "1.37.0"
 features = ["full"]
