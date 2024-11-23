@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Debug};
 
-use anyhow::{anyhow, Result};
+use eyre::{anyhow, Result};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
