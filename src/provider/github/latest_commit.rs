@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use anyhow::{anyhow, Result};
+use eyre::{anyhow, Result};
 use graphql_client::reqwest::post_graphql;
 use graphql_client::GraphQLQuery;
 use reqwest::Client;

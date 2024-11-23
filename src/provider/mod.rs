@@ -1,10 +1,11 @@
+use eyre::{Context, Result};
 use tracing::instrument;
 use url::Url;
 
 pub(crate) mod github;
 
 #[instrument]
-pub async fn retrieve_commit_identifier(url: &Url) -> String {
+pub async fn retrieve_commit_identifier(url: &Url) -> Result<String> {
     let provider = url.scheme();
 
     match provider {
@@ -14,7 +15,7 @@ pub async fn retrieve_commit_identifier(url: &Url) -> String {
 }
 
 #[instrument]
-async fn get_github_sha1(url: &Url) -> String {
+async fn get_github_sha1(url: &Url) -> Result<String> {
     // TODO: also treat `rev` in the query string properly
     let (owner, repo, branch) = match url.path().split('/').collect::<Vec<_>>()[..] {
         [o, r] => (o.to_string(), r.to_string(), "main".to_string()),
@@ -24,5 +25,5 @@ async fn get_github_sha1(url: &Url) -> String {
 
     github::get_latest_commit(owner, repo, Some(branch))
         .await
-        .unwrap()
+        .wrap_err("retrieving latest commit rev")
 }

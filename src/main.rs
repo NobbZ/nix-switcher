@@ -1,10 +1,14 @@
-use std::{error::Error, io::Error as IoError, path::Path, process::ExitStatus, str};
+#![warn(clippy::unwrap_used)]
+
+use std::{path::Path, process::ExitStatus, str};
 
 use futures::future;
 use tokio::{self, process::Command};
 use tracing::{instrument, Level};
 use tracing_futures::Instrument;
 use tracing_subscriber::FmtSubscriber;
+
+use eyre::{ContextCompat, Result, WrapErr};
 
 use crate::provider::github;
 
@@ -16,52 +20,62 @@ const REPO: &str = "nixos-config";
 const BRANCH: &str = "main";
 
 #[instrument]
-async fn get_command_out(cmd: &mut Command) -> String {
-    let out = cmd.output().await.unwrap().stdout;
+async fn get_command_out(cmd: &mut Command) -> Result<String> {
+    let out = cmd.output().await.wrap_err("running the command")?.stdout;
 
-    str::from_utf8(&out).unwrap().trim().to_string()
+    Ok(str::from_utf8(&out)
+        .wrap_err("converting the output to UTF-8")?
+        .trim()
+        .to_string())
 }
 
 #[instrument]
-async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus, IoError> {
-    cmd.spawn().unwrap().wait().await
+async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus> {
+    Ok(cmd.spawn().wrap_err("spawing the command")?.wait().await?)
 }
 
 #[instrument]
-async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> String {
-    github::get_latest_commit(owner, repo, Some(branch))
+async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<String> {
+    github::get_latest_commit(owner, repo, Some(branch)).await
+}
+
+#[instrument]
+async fn get_hostname() -> Result<String> {
+    get_command_out(&mut Command::new("hostname"))
         .await
-        .unwrap()
+        .wrap_err("retrieving the hostname")
 }
 
 #[instrument]
-async fn get_hostname() -> String {
-    get_command_out(&mut Command::new("hostname")).await
+async fn get_username() -> Result<String> {
+    get_command_out(&mut Command::new("whoami"))
+        .await
+        .wrap_err("retrieving the current username")
 }
 
 #[instrument]
-async fn get_username() -> String {
-    get_command_out(&mut Command::new("whoami")).await
+async fn get_tempfldr() -> Result<String> {
+    get_command_out(Command::new("mktemp").arg("-d"))
+        .await
+        .wrap_err("creating the temporary folder")
 }
 
 #[instrument]
-async fn get_tempfldr() -> String {
-    get_command_out(Command::new("mktemp").arg("-d")).await
-}
-
-#[instrument]
-async fn check_nom() -> Option<String> {
-    let location = get_command_out(Command::new("which").arg("nom")).await;
+async fn check_nom() -> Result<Option<String>> {
+    let location = get_command_out(Command::new("which").arg("nom"))
+        .await
+        .wrap_err("searching for `nom`")?;
 
     if location.is_empty() {
-        return None;
+        return Ok(None);
     }
 
-    Some(location)
+    Ok(Some(location))
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
+    color_eyre::install().wrap_err("installing 'color-eyre'")?;
     FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
 
     tracing::info!("Gathering info");
@@ -72,7 +86,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     let temp_promise = get_tempfldr();
     let nom_promise = check_nom();
 
-    let (sha1, host, user, temp, nom) = future::join5(
+    let (sha1_res, host_res, user_res, temp_res, nom_res) = future::join5(
         sha1_promise,
         host_promise,
         user_promise,
@@ -81,6 +95,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
     )
     .instrument(tracing::trace_span!("gather_info"))
     .await;
+
+    let (sha1, host, user, temp, nom) = (sha1_res?, host_res?, user_res?, temp_res?, nom_res?);
 
     tracing::info!(%sha1, %host, %user, %temp, ?nom, "Gathered info");
 
@@ -106,15 +122,20 @@ async fn main() -> Result<(), Box<dyn Error>> {
     tracing::info!(%flake_url, %nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
     tracing::info!("Starting to build");
 
-    spawn_command(Command::new("nom").args([
-        "build",
-        "--keep-going",
-        "-L",
-        "--out-link",
-        out_link.as_os_str().to_str().unwrap(),
-        &nixos_config,
-        &home_config,
-    ]))
+    spawn_command(
+        Command::new("nom").args([
+            "build",
+            "--keep-going",
+            "-L",
+            "--out-link",
+            out_link
+                .as_os_str()
+                .to_str()
+                .wrap_err_with(|| format!("converting {:?} to UTF-8", out_link))?,
+            &nixos_config,
+            &home_config,
+        ]),
+    )
     .instrument(tracing::debug_span!("nom_build"))
     .await?;
 
