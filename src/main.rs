@@ -75,6 +75,7 @@ async fn check_nom() -> Result<Option<String>> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    color_eyre::install().wrap_err("installing 'color-eyre'")?;
     FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
 
     tracing::info!("Gathering info");
