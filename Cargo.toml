@@ -26,4 +26,7 @@ url = "2.5.0"
 version = "1.41.1"
 features = ["full"]
 
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+
 
