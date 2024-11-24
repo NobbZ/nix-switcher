@@ -19,6 +19,7 @@
         inputs',
         self',
         pkgs,
+        lib,
         ...
       }: let
         inherit (inputs'.nixpkgs.legacyPackages.lib) pipe;
