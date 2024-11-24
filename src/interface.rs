@@ -5,6 +5,8 @@ use clap::ArgAction::Count;
 use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell as ClapShell;
 
+use crate::flake::r#ref::FlakeRef;
+
 #[derive(Debug, Parser)]
 #[command(author, version, about, long_about = None)]
 // #[command(propagate_version = True)]
@@ -33,15 +35,19 @@ pub enum LogFormat {
     Json,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Subcommand, Clone)]
 pub enum SwitcherCommand {
     Build(BuildArgs),
     Complete(CompleteArgs),
 }
 
-#[derive(Debug, Args)]
+#[derive(Debug, Args, Clone)]
 /// Builds a system and switch to its configuration
 pub struct BuildArgs {
+    #[arg(short = 'F', long)]
+    /// which flake to use (no fragment allowed)
+    pub flake: FlakeRef,
+
     #[arg(short = 'H', long)]
     /// Host to build (will default to the current system)
     pub host: Option<String>,
@@ -59,7 +65,7 @@ pub struct BuildArgs {
     pub all_systems: bool,
 }
 
-#[derive(Debug, Args)]
+#[derive(Debug, Args, Clone)]
 /// Generate a completion for the requested shell
 pub struct CompleteArgs {
     #[arg()]

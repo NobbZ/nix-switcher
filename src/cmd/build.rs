@@ -1,4 +1,4 @@
-use eyre::{anyhow, Result};
+use eyre::{anyhow, ensure, Result};
 use tracing::instrument;
 
 use crate::{
@@ -12,31 +12,34 @@ pub async fn run(args: SwitcherParser) -> Result<()> {
         return Err(anyhow!("build called with wrong subcommand"));
     };
 
-    if build_args.host.is_none() {
-        return Err(anyhow!(
-            "Automatic host name discovery is not yet implemented"
-        ));
-    }
+    ensure!(
+        build_args.host.is_some(),
+        "Automatic host name discovery is not yet implemented"
+    );
 
-    if build_args.flake.fragment().is_some() {
-        return Err(anyhow!("'--flake' is not allowed to contain a fragment"));
-    }
+    ensure!(
+        build_args.flake.fragment().is_none(),
+        "'--flake' is not allowed to contain a fragment"
+    );
 
-    if build_args.all_systems {
-        return Err(anyhow!("'--all-systems' is not yet supported"));
-    }
+    ensure!(
+        !build_args.all_systems,
+        "'--all-systems' is not yet supported"
+    );
 
-    if build_args.only_system {
-        return Err(anyhow!("'--only-system' is not yet supported"));
-    }
+    ensure!(
+        !build_args.only_system,
+        "'--only-system' is not yet supported"
+    );
 
-    if build_args.user.is_empty() {
-        return Err(anyhow!("at least one '--user' is currently required"));
-    }
+    ensure!(
+        !build_args.user.is_empty(),
+        "at least one '--user' is currently required"
+    );
 
     let mut flake_ref = build_args.flake.clone();
     flake_ref
-        .set_commit_id(provider::retrieve_commit_identifier(&flake_ref.clone().into()).await)?;
+        .set_commit_id(provider::retrieve_commit_identifier(&flake_ref.clone().into()).await?)?;
 
     tracing::info!(%flake_ref, "built base flake ref");
 
