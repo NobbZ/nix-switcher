@@ -1,5 +1,4 @@
 [toolchain]
-channel = "1.71.1"
 components = [
     "rust-src",
     "rust-analysis",
@@ -7,3 +6,4 @@ components = [
     "rustfmt",
     "clippy",
 ]
+channel = "1.83.0"
