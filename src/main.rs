@@ -159,7 +159,7 @@ async fn main() -> Result<()> {
     .await?;
 
     tracing::info!("Finished building");
-    if is_nixos().await {
+    if nixos_config.is_some() {
         tracing::info!(%host, "Switching system configuration");
 
         spawn_command(Command::new("nixos-rebuild").args([
