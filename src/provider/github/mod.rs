@@ -12,8 +12,8 @@ const ENDPOINT: &str = "https://api.github.com/graphql";
 
 type GitObjectID = String;
 
-pub(self) mod latest_commit;
-pub(self) mod latest_commit_default_branch;
+mod latest_commit;
+mod latest_commit_default_branch;
 
 #[derive(Deserialize, Clone)]
 struct GhHost {
