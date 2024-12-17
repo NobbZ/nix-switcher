@@ -73,6 +73,27 @@ async fn check_nom() -> Result<Option<String>> {
     Ok(Some(location))
 }
 
+#[instrument]
+async fn is_nixos() -> bool {
+    Path::new("/etc/NIXOS").exists()
+}
+
+#[instrument]
+async fn format_nixos_config<S1, S2>(flake_url: S1, hostname: S2) -> Option<String>
+where
+    S1: std::fmt::Display + std::fmt::Debug,
+    S2: std::fmt::Display + std::fmt::Debug,
+{
+    if !is_nixos().await {
+        return None;
+    };
+
+    Some(format!(
+        "{}#nixosConfigurations.{}.config.system.build.toplevel",
+        flake_url, hostname
+    ))
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install().wrap_err("installing 'color-eyre'")?;
@@ -107,10 +128,7 @@ async fn main() -> Result<()> {
     tracing::info!("Building strings");
 
     let flake_url = format!("github:{}/{}?ref={}", OWNER, REPO, sha1);
-    let nixos_config = format!(
-        "{}#nixosConfigurations.{}.config.system.build.toplevel",
-        flake_url, host
-    );
+    let nixos_config = format_nixos_config(&flake_url, &host).await;
     let nixos_rebuild = format!("{}#{}", flake_url, host);
     let home_config = format!(
         "{}#homeConfigurations.{}@{}.activationPackage",
@@ -119,39 +137,44 @@ async fn main() -> Result<()> {
     let home_manager = format!("{}#{}@{}", flake_url, user, host);
     let out_link = Path::new(&temp).join("result");
 
-    tracing::info!(%flake_url, %nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
+    tracing::info!(%flake_url, ?nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
     tracing::info!("Starting to build");
 
     spawn_command(
-        Command::new("nom").args([
-            "build",
-            "--keep-going",
-            "-L",
-            "--out-link",
-            out_link
-                .as_os_str()
-                .to_str()
-                .wrap_err_with(|| format!("converting {:?} to UTF-8", out_link))?,
-            &nixos_config,
-            &home_config,
-        ]),
+        Command::new("nom")
+            .args([
+                "build",
+                "--keep-going",
+                "-L",
+                "--out-link",
+                out_link
+                    .as_os_str()
+                    .to_str()
+                    .wrap_err_with(|| format!("converting {:?} to UTF-8", out_link))?,
+                &home_config,
+            ])
+            .args(nixos_config.as_slice()),
     )
     .instrument(tracing::debug_span!("nom_build"))
     .await?;
 
     tracing::info!("Finished building");
-    tracing::info!(%host, "Switching system configuration");
+    if is_nixos().await {
+        tracing::info!(%host, "Switching system configuration");
 
-    spawn_command(Command::new("nixos-rebuild").args([
-        "switch",
-        "--use-remote-sudo",
-        "--flake",
-        &nixos_rebuild,
-    ]))
-    .instrument(tracing::debug_span!("nixos_switch"))
-    .await?;
+        spawn_command(Command::new("nixos-rebuild").args([
+            "switch",
+            "--use-remote-sudo",
+            "--flake",
+            &nixos_rebuild,
+        ]))
+        .instrument(tracing::debug_span!("nixos_switch"))
+        .await?;
 
-    tracing::info!(%host, "Switched system configuration");
+        tracing::info!(%host, "Switched system configuration");
+    } else {
+        tracing::info!(%host, "Not a NixOS, skipping activation");
+    }
     tracing::info!(%user, %host, "Switching user configuration");
 
     spawn_command(Command::new("home-manager").args(["switch", "--flake", &home_manager]))
