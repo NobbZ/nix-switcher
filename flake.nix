@@ -28,23 +28,34 @@
           (pkgs: pkgs.extend inputs.cargo2nix.overlays.default)
         ];
 
-        rust = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain.toml";
         rustVersion = pipe "${inputs.self}/rust-toolchain.toml" [
           builtins.readFile
           builtins.fromTOML
           (toml: toml.toolchain.channel)
         ];
+
+        rust = pkgs.rust-bin.stable.${rustVersion}.default;
+
+        rustPlatform = pkgs.makeRustPlatform {
+          rustc = rust;
+          cargo = rust;
+        };
       in {
         _module.args.pkgs = pkgsWithOverlays;
 
         formatter = pkgs.alejandra;
 
-        legacyPackages.switcherPkgsBuilder = pkgs.rustBuilder.makePackageSet {
-          inherit rustVersion;
-          packageFun = import "${inputs.self}/Cargo.nix";
-        };
+        packages.switcher = rustPlatform.buildRustPackage {
+          name = "switcher";
+          version = "0.2.7-unstable-${inputs.self.rev or inputs.self.dirtyRev}";
 
-        packages.switcher = (self'.legacyPackages.switcherPkgsBuilder.workspace.switcher {}).bin;
+          src = ./.;
+
+          cargoLock.lockFile = ./Cargo.lock;
+
+          nativeBuildInputs = [pkgs.pkg-config];
+          buildInputs = [pkgs.openssl];
+        };
         packages.default = self'.packages.switcher;
 
         devShells.default = pkgs.mkShell {
