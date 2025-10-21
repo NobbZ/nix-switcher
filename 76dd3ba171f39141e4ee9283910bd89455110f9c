@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "b655edd8_ed09625b",
+        "filename": "nix/packages/switcher.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-10-21T21:35:12Z",
+      "side": 1,
+      "message": "Can we use `\"${self}\"` here and in equivalent locations?",
+      "revId": "76dd3ba171f39141e4ee9283910bd89455110f9c",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
