@@ -5,10 +5,6 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
 
     rust-overlay.url = "github:oxalica/rust-overlay";
-
-    cargo2nix.url = "github:cargo2nix/cargo2nix";
-    cargo2nix.inputs.nixpkgs.follows = "nixpkgs";
-    cargo2nix.inputs.rust-overlay.follows = "rust-overlay";
   };
 
   outputs = {flake-parts, ...} @ inputs:
@@ -25,26 +21,42 @@
 
         pkgsWithOverlays = inputs'.nixpkgs.legacyPackages.lib.pipe inputs'.nixpkgs.legacyPackages [
           (pkgs: pkgs.extend inputs.rust-overlay.overlays.default)
-          (pkgs: pkgs.extend inputs.cargo2nix.overlays.default)
         ];
 
-        rust = pkgs.rust-bin.fromRustupToolchainFile "${inputs.self}/rust-toolchain.toml";
         rustVersion = pipe "${inputs.self}/rust-toolchain.toml" [
           builtins.readFile
           builtins.fromTOML
           (toml: toml.toolchain.channel)
         ];
+
+        rust = pkgs.rust-bin.stable.${rustVersion}.default;
+
+        rustPlatform = pkgs.makeRustPlatform {
+          rustc = rust;
+          cargo = rust;
+        };
       in {
         _module.args.pkgs = pkgsWithOverlays;
 
         formatter = pkgs.alejandra;
 
-        legacyPackages.switcherPkgsBuilder = pkgs.rustBuilder.makePackageSet {
-          inherit rustVersion;
-          packageFun = import "${inputs.self}/Cargo.nix";
-        };
+        packages.switcher = rustPlatform.buildRustPackage {
+          name = "switcher";
+          version = "0.2.7-unstable-${inputs.self.rev or inputs.self.dirtyRev}";
 
-        packages.switcher = (self'.legacyPackages.switcherPkgsBuilder.workspace.switcher {}).bin;
+          src = let
+            fs = pkgs.lib.fileset;
+          in
+            fs.toSource {
+              root = ./.;
+              fileset = fs.difference ./. (fs.unions [./flake.lock ./flake.nix]);
+            };
+
+          cargoLock.lockFile = ./Cargo.lock;
+
+          nativeBuildInputs = [pkgs.pkg-config];
+          buildInputs = [pkgs.openssl];
+        };
         packages.default = self'.packages.switcher;
 
         devShells.default = pkgs.mkShell {
