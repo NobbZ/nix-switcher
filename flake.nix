@@ -40,23 +40,7 @@
 
         formatter = pkgs.alejandra;
 
-        packages.switcher = rustPlatform.buildRustPackage {
-          name = "switcher";
-          version = "0.2.7-unstable-${inputs.self.rev or inputs.self.dirtyRev}";
-
-          src = let
-            fs = pkgs.lib.fileset;
-          in
-            fs.toSource {
-              root = ./.;
-              fileset = fs.difference ./. (fs.unions [./flake.lock ./flake.nix]);
-            };
-
-          cargoLock.lockFile = ./Cargo.lock;
-
-          nativeBuildInputs = [pkgs.pkg-config];
-          buildInputs = [pkgs.openssl];
-        };
+        packages.switcher = pkgs.callPackage ./nix/packages/switcher.nix {inherit rustPlatform inputs;};
         packages.default = self'.packages.switcher;
 
         devShells.default = pkgs.mkShell {
