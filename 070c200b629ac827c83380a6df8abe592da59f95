@@ -16,6 +16,24 @@
       "message": "Please add `file-set` and trim down the source here, leave out the `flake.*` files.",
       "revId": "070c200b629ac827c83380a6df8abe592da59f95",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "458f1e6e_685fae7a",
+        "filename": "flake.nix",
+        "patchSetId": 1
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-10-21T21:04:52Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dee254f4_704f134a",
+      "revId": "070c200b629ac827c83380a6df8abe592da59f95",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
   ]
 }
