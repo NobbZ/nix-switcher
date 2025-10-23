@@ -1,11 +1,12 @@
-use std::{collections::HashMap, fmt::Debug};
+use core::str;
+use std::fmt::Debug;
 
-use eyre::{anyhow, Result};
+use eyre::{Context, Result};
 use reqwest::{
     header::{HeaderMap, HeaderValue},
     Client,
 };
-use serde::Deserialize;
+use tokio::process::Command;
 use tracing::instrument;
 
 const ENDPOINT: &str = "https://api.github.com/graphql";
@@ -14,13 +15,6 @@ type GitObjectID = String;
 
 mod latest_commit;
 mod latest_commit_default_branch;
-
-#[derive(Deserialize, Clone)]
-struct GhHost {
-    // user: String,
-    oauth_token: String,
-    // git_protocoll: String,
-}
 
 #[instrument]
 pub(crate) async fn get_latest_commit<S1, S2, S3>(
@@ -38,7 +32,7 @@ where
     let mut headers = HeaderMap::new();
     headers.insert(
         "Authorization",
-        HeaderValue::from_str(&format!("bearer {}", auth.await?.oauth_token))?,
+        HeaderValue::from_str(&format!("bearer {}", auth.await?))?,
     );
 
     let client = Client::builder()
@@ -54,13 +48,16 @@ where
 }
 
 #[instrument]
-async fn get_gh_creds() -> Result<GhHost> {
-    let home = std::env::var("HOME")?;
-    let path = std::path::Path::new(&home).join(".config/gh/hosts.yml");
-    let f = tokio::fs::File::open(path).await?;
-    let d: HashMap<String, GhHost> = serde_yaml::from_reader(f.into_std().await)?;
+async fn get_gh_creds() -> Result<String> {
+    let out = Command::new("gh")
+        .args(["auth", "token"])
+        .output()
+        .await
+        .wrap_err("running the command")?
+        .stdout;
 
-    d.get("github.com")
-        .cloned()
-        .ok_or_else(|| anyhow!("Host not configured: github.com"))
+    Ok(str::from_utf8(&out)
+        .wrap_err("converting the output to UTF-8")?
+        .trim()
+        .to_string())
 }
