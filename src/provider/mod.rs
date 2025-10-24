@@ -5,6 +5,7 @@ use url::Url;
 pub(crate) mod github;
 
 #[instrument]
+#[allow(dead_code)]
 pub async fn retrieve_commit_identifier(url: &Url) -> Result<String> {
     let provider = url.scheme();
 
@@ -15,6 +16,7 @@ pub async fn retrieve_commit_identifier(url: &Url) -> Result<String> {
 }
 
 #[instrument]
+#[allow(dead_code)]
 async fn get_github_sha1(url: &Url) -> Result<String> {
     // TODO: also treat `rev` in the query string properly
     let (owner, repo, branch) = match url.path().split('/').collect::<Vec<_>>()[..] {
