@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "d384aec7_ff932f02",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-10-24T13:39:55Z",
+      "side": 1,
+      "message": "Far from perfect, but good enough for now!",
+      "revId": "dcd4644ae5747f9a19bb2dbdd5da9a80326d81a2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
