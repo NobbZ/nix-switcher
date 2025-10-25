@@ -1,5 +1,6 @@
 #![warn(clippy::unwrap_used)]
 
+use core::panic;
 use std::{path::Path, process::ExitStatus, str};
 
 use futures::future;
@@ -74,6 +75,19 @@ async fn check_nom() -> Result<Option<String>> {
 }
 
 #[instrument]
+async fn check_gh() -> Result<Option<String>> {
+    let location = get_command_out(Command::new("which").arg("gh"))
+        .await
+        .wrap_err("searching for `gh`")?;
+
+    if location.is_empty() {
+        return Ok(None);
+    }
+
+    Ok(Some(location))
+}
+
+#[instrument]
 async fn is_nixos() -> bool {
     Path::new("/etc/NIXOS").exists()
 }
@@ -106,23 +120,28 @@ async fn main() -> Result<()> {
     let user_promise = get_username();
     let temp_promise = get_tempfldr();
     let nom_promise = check_nom();
+    let gh_promise = check_gh();
 
-    let (sha1_res, host_res, user_res, temp_res, nom_res) = future::join5(
-        sha1_promise,
-        host_promise,
-        user_promise,
-        temp_promise,
-        nom_promise,
-    )
-    .instrument(tracing::trace_span!("gather_info"))
-    .await;
+    let (nom_res, gh_res) = future::join(nom_promise, gh_promise)
+        .instrument(tracing::trace_span!("checking dependencies"))
+        .await;
 
-    let (sha1, host, user, temp, nom) = (sha1_res?, host_res?, user_res?, temp_res?, nom_res?);
+    let (sha1_res, host_res, user_res, temp_res) =
+        future::join4(sha1_promise, host_promise, user_promise, temp_promise)
+            .instrument(tracing::trace_span!("gather_info"))
+            .await;
 
-    tracing::info!(%sha1, %host, %user, %temp, ?nom, "Gathered info");
+    let (sha1, host, user, temp, nom, gh) = (
+        sha1_res?, host_res?, user_res?, temp_res?, nom_res?, gh_res?,
+    );
 
-    if nom.is_none() {
-        panic!("Nix output monitor not found");
+    tracing::info!(%sha1, %host, %user, %temp, ?nom, ?gh, "Gathered info");
+
+    match (gh.is_none(), nom.is_none()) {
+        (true, true) => panic!("GH-CLI and Nix Output Monitor were not found"),
+        (true, _) => panic!("GH-CLI was not found"),
+        (_, true) => panic!("Nix Output Monitor was not found"),
+        _ => (),
     }
 
     tracing::info!("Building strings");
