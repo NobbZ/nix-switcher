@@ -1,13 +1,17 @@
-use std::{path::Path, process::ExitStatus, str};
+use std::process::ExitStatus;
 
+use mockall_double::double;
 use tokio::{self, process::Command};
 use tracing::instrument;
 
 use eyre::{Result, WrapErr};
 
 use crate::provider::github;
+#[double]
+use crate::system::System;
 
 mod provider;
+pub mod system;
 
 pub const OWNER: &str = "nobbz";
 pub const REPO: &str = "nixos-config";
@@ -15,12 +19,9 @@ pub const BRANCH: &str = "main";
 
 #[instrument]
 async fn get_command_out(cmd: &mut Command) -> Result<String> {
-    let out = cmd.output().await.wrap_err("running the command")?.stdout;
+    let system = System::default();
 
-    Ok(str::from_utf8(&out)
-        .wrap_err("converting the output to UTF-8")?
-        .trim()
-        .to_string())
+    system.get_command_out(cmd).await
 }
 
 #[instrument]
@@ -31,13 +32,6 @@ pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus> {
 #[instrument]
 pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<String> {
     github::get_latest_commit(owner, repo, Some(branch)).await
-}
-
-#[instrument]
-pub async fn get_hostname() -> Result<String> {
-    get_command_out(&mut Command::new("hostname"))
-        .await
-        .wrap_err("retrieving the hostname")
 }
 
 #[instrument]
@@ -80,18 +74,17 @@ pub async fn check_gh() -> Result<Option<String>> {
     Ok(Some(location))
 }
 
-#[instrument]
-async fn is_nixos() -> bool {
-    Path::new("/etc/NIXOS").exists()
-}
-
-#[instrument]
-pub async fn format_nixos_config<S1, S2>(flake_url: S1, hostname: S2) -> Option<String>
+#[instrument(skip(system))]
+pub async fn format_nixos_config<S1, S2>(
+    system: &System,
+    flake_url: S1,
+    hostname: S2,
+) -> Option<String>
 where
     S1: std::fmt::Display + std::fmt::Debug,
     S2: std::fmt::Display + std::fmt::Debug,
 {
-    if !is_nixos().await {
+    if !system.is_nixos().await {
         return None;
     };
 
@@ -99,4 +92,37 @@ where
         "{}#nixosConfigurations.{}.config.system.build.toplevel",
         flake_url, hostname
     ))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn regular_linux_doesnt_get_a_toplevel() {
+        let mut mock_system = System::default();
+
+        mock_system.expect_is_nixos().return_const(false);
+
+        let result = format_nixos_config(&mock_system, "github:example/config", "nixos").await;
+
+        assert_eq!(None, result);
+    }
+
+    #[tokio::test]
+    async fn nixos_does_get_a_toplevel() {
+        let mut mock_system = System::default();
+
+        mock_system.expect_is_nixos().return_const(true);
+
+        let result = format_nixos_config(&mock_system, "github:example/config", "nixos").await;
+
+        assert_eq!(
+            Some(
+                "github:example/config#nixosConfigurations.nixos.config.system.build.toplevel"
+                    .to_string()
+            ),
+            result
+        );
+    }
 }

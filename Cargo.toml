@@ -22,6 +22,9 @@ reqwest = "0.11.23"
 url = "2.5.0"
 eyre = "0.6.12"
 color-eyre = "0.6.3"
+mockall = "0.13.1"
+async-trait = "0.1.89"
+mockall_double = "0.3.1"
 
 [dependencies.tokio]
 version = "1"

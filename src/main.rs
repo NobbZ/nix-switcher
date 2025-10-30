@@ -11,6 +11,8 @@ use tracing_subscriber::FmtSubscriber;
 
 use eyre::{ContextCompat, Result, WrapErr};
 
+use switcher::system::System;
+
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install().wrap_err("installing 'color-eyre'")?;
@@ -18,8 +20,10 @@ async fn main() -> Result<()> {
 
     tracing::info!("Gathering info");
 
+    let system = System::default();
+
     let sha1_promise = switcher::retrieve_sha(switcher::OWNER, switcher::REPO, switcher::BRANCH);
-    let host_promise = switcher::get_hostname();
+    let host_promise = system.get_hostname();
     let user_promise = switcher::get_username();
     let temp_promise = switcher::get_tempfldr();
     let nom_promise = switcher::check_nom();
@@ -50,7 +54,7 @@ async fn main() -> Result<()> {
     tracing::info!("Building strings");
 
     let flake_url = format!("github:{}/{}?ref={}", switcher::OWNER, switcher::REPO, sha1);
-    let nixos_config = switcher::format_nixos_config(&flake_url, &host).await;
+    let nixos_config = switcher::format_nixos_config(&system, &flake_url, &host).await;
     let nixos_rebuild = format!("{}#{}", flake_url, host);
     let home_config = format!(
         "{}#homeConfigurations.{}@{}.activationPackage",
