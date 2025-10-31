@@ -25,6 +25,13 @@ impl System {
     }
 
     #[instrument(skip(self))]
+    pub async fn get_tempfldr(&self) -> Result<String> {
+        self.get_command_out(Command::new("mktemp").arg("-d"))
+            .await
+            .wrap_err("creating the temporary folder")
+    }
+
+    #[instrument(skip(self))]
     pub async fn get_command_out(&self, cmd: &mut Command) -> Result<String> {
         let out = cmd.output().await.wrap_err("running the command")?.stdout;
 
