@@ -10,12 +10,21 @@ pub struct System {}
 
 #[automock]
 impl System {
+    #[instrument(skip(self))]
     pub async fn get_hostname(&self) -> Result<String> {
         self.get_command_out(&mut Command::new("hostname"))
             .await
             .wrap_err("retrieving the hostname")
     }
 
+    #[instrument(skip(self))]
+    pub async fn get_username(&self) -> Result<String> {
+        self.get_command_out(&mut Command::new("whoami"))
+            .await
+            .wrap_err("retrieving the current username")
+    }
+
+    #[instrument(skip(self))]
     pub async fn get_command_out(&self, cmd: &mut Command) -> Result<String> {
         let out = cmd.output().await.wrap_err("running the command")?.stdout;
 

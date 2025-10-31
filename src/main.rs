@@ -24,7 +24,7 @@ async fn main() -> Result<()> {
 
     let sha1_promise = switcher::retrieve_sha(switcher::OWNER, switcher::REPO, switcher::BRANCH);
     let host_promise = system.get_hostname();
-    let user_promise = switcher::get_username();
+    let user_promise = system.get_username();
     let temp_promise = switcher::get_tempfldr();
     let nom_promise = switcher::check_nom();
     let gh_promise = switcher::check_gh();

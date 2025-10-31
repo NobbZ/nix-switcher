@@ -35,13 +35,6 @@ pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<Strin
 }
 
 #[instrument]
-pub async fn get_username() -> Result<String> {
-    get_command_out(&mut Command::new("whoami"))
-        .await
-        .wrap_err("retrieving the current username")
-}
-
-#[instrument]
 pub async fn get_tempfldr() -> Result<String> {
     get_command_out(Command::new("mktemp").arg("-d"))
         .await
