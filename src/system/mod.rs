@@ -10,6 +10,11 @@ pub struct System {}
 
 #[automock]
 impl System {
+    /// Retrieves the current hosts hostname.
+    ///
+    /// # Errors
+    ///
+    /// Will return an `Err` if there was a problem retrieving the hostname.
     #[instrument(skip(self))]
     pub async fn get_hostname(&self) -> Result<String> {
         self.get_command_out(&mut Command::new("hostname"))
@@ -17,6 +22,11 @@ impl System {
             .wrap_err("retrieving the hostname")
     }
 
+    /// Retrieves the current users username.
+    ///
+    /// # Errors
+    ///
+    /// Will return an `Err` if there was a problem retrieving the username.
     #[instrument(skip(self))]
     pub async fn get_username(&self) -> Result<String> {
         self.get_command_out(&mut Command::new("whoami"))
@@ -24,6 +34,11 @@ impl System {
             .wrap_err("retrieving the current username")
     }
 
+    /// Runs an arbitrary command and returns the output as a `String`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if there was a problem running the given program.
     #[instrument(skip(self))]
     pub async fn get_command_out(&self, cmd: &mut Command) -> Result<String> {
         let out = cmd.output().await.wrap_err("running the command")?.stdout;

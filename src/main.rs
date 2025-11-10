@@ -55,12 +55,9 @@ async fn main() -> Result<()> {
 
     let flake_url = format!("github:{}/{}?ref={}", switcher::OWNER, switcher::REPO, sha1);
     let nixos_config = switcher::format_nixos_config(&system, &flake_url, &host).await;
-    let nixos_rebuild = format!("{}#{}", flake_url, host);
-    let home_config = format!(
-        "{}#homeConfigurations.{}@{}.activationPackage",
-        flake_url, user, host
-    );
-    let home_manager = format!("{}#{}@{}", flake_url, user, host);
+    let nixos_rebuild = format!("{flake_url}#{host}");
+    let home_config = format!("{flake_url}#homeConfigurations.{user}@{host}.activationPackage");
+    let home_manager = format!("{flake_url}#{user}@{host}");
     let out_link = Path::new(&temp).join("result");
 
     tracing::info!(%flake_url, ?nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
@@ -76,7 +73,7 @@ async fn main() -> Result<()> {
                 out_link
                     .as_os_str()
                     .to_str()
-                    .wrap_err_with(|| format!("converting {:?} to UTF-8", out_link))?,
+                    .wrap_err_with(|| format!("converting {out_link:?} to UTF-8"))?,
                 &home_config,
             ])
             .args(nixos_config.as_slice()),

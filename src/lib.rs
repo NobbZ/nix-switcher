@@ -24,16 +24,31 @@ async fn get_command_out(cmd: &mut Command) -> Result<String> {
     system.get_command_out(cmd).await
 }
 
+/// Spawns the given command.
+///
+/// # Errors
+///
+/// Returns an `Err` if spawning the command failed.
 #[instrument]
 pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus> {
     Ok(cmd.spawn().wrap_err("spawing the command")?.wait().await?)
 }
 
+/// Retrieves the SHA1 of the latest commit on the configured branch.
+///
+/// # Errors
+///
+/// Returns an `Err` if the latest commits SHA couldn't be retrieved.
 #[instrument]
 pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<String> {
     github::get_latest_commit(owner, repo, Some(branch)).await
 }
 
+/// Creates a temporary folder and returns its location in the file system as a `String`.
+///
+/// # Errors
+///
+/// Returns an `Err` if there was an error when calling the underlying system commands.
 #[instrument]
 pub async fn get_tempfldr() -> Result<String> {
     get_command_out(Command::new("mktemp").arg("-d"))
@@ -41,6 +56,11 @@ pub async fn get_tempfldr() -> Result<String> {
         .wrap_err("creating the temporary folder")
 }
 
+/// Checks whether the `nom` binary is in `PATH`.
+///
+/// # Errors
+///
+/// Returns an `Err` if there was a problem calling `which`.
 #[instrument]
 pub async fn check_nom() -> Result<Option<String>> {
     let location = get_command_out(Command::new("which").arg("nom"))
@@ -54,6 +74,11 @@ pub async fn check_nom() -> Result<Option<String>> {
     Ok(Some(location))
 }
 
+/// Checks whether `gh` is in `PATH`.
+///
+/// # Errors
+///
+/// Returns an `Err` if there was a problem calling `which`.
 #[instrument]
 pub async fn check_gh() -> Result<Option<String>> {
     let location = get_command_out(Command::new("which").arg("gh"))
@@ -82,8 +107,7 @@ where
     };
 
     Some(format!(
-        "{}#nixosConfigurations.{}.config.system.build.toplevel",
-        flake_url, hostname
+        "{flake_url}#nixosConfigurations.{hostname}.config.system.build.toplevel"
     ))
 }
 
