@@ -11,6 +11,7 @@ use tracing_subscriber::FmtSubscriber;
 
 use eyre::{ContextCompat, Result, WrapErr};
 
+use switcher::config::Config;
 use switcher::system::System;
 
 #[tokio::main]
@@ -22,7 +23,7 @@ async fn main() -> Result<()> {
 
     let system = System::default();
 
-    let conf: switcher::config::Config = switcher::config::Config::figment()?.extract()?;
+    let conf: Config = Config::figment()?.extract()?;
 
     let sha1_promise =
         switcher::provider::github::get_latest_commit(&conf.owner, &conf.repo, conf.branch);
