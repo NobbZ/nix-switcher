@@ -2,7 +2,7 @@ use eyre::{Context, Result};
 use tracing::instrument;
 use url::Url;
 
-pub(crate) mod github;
+pub mod github;
 
 #[instrument]
 #[allow(dead_code)]

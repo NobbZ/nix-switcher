@@ -22,7 +22,10 @@ async fn main() -> Result<()> {
 
     let system = System::default();
 
-    let sha1_promise = switcher::retrieve_sha(switcher::OWNER, switcher::REPO, switcher::BRANCH);
+    let conf: switcher::config::Config = dbg!(switcher::config::Config::figment()).extract()?;
+
+    let sha1_promise =
+        switcher::provider::github::get_latest_commit(&conf.owner, &conf.repo, conf.branch);
     let host_promise = system.get_hostname();
     let user_promise = system.get_username();
     let temp_promise = system.get_tempfldr();
@@ -53,7 +56,7 @@ async fn main() -> Result<()> {
 
     tracing::info!("Building strings");
 
-    let flake_url = format!("github:{}/{}?ref={}", switcher::OWNER, switcher::REPO, sha1);
+    let flake_url = format!("github:{}/{}?ref={}", conf.owner, conf.repo, sha1);
     let nixos_config = switcher::format_nixos_config(&system, &flake_url, &host).await;
     let nixos_rebuild = format!("{flake_url}#{host}");
     let home_config = format!("{flake_url}#homeConfigurations.{user}@{host}.activationPackage");

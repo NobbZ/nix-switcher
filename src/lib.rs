@@ -10,12 +10,9 @@ use crate::provider::github;
 #[double]
 use crate::system::System;
 
-mod provider;
+pub mod config;
+pub mod provider;
 pub mod system;
-
-pub const OWNER: &str = "nobbz";
-pub const REPO: &str = "nixos-config";
-pub const BRANCH: &str = "main";
 
 #[instrument]
 async fn get_command_out(cmd: &mut Command) -> Result<String> {
