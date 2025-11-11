@@ -4,6 +4,7 @@ use core::panic;
 use std::path::Path;
 
 use futures::future;
+use microxdg::XdgApp;
 use tokio::{self, process::Command};
 use tracing::Instrument;
 use tracing::Level;
@@ -22,11 +23,13 @@ async fn main() -> Result<()> {
     tracing::info!("Gathering info");
 
     let system = System::default();
+    let xdg_app = XdgApp::new("switcher")?;
 
-    let conf: Config = Config::figment()?.extract()?;
+    let conf: Config = Config::figment(&xdg_app)?.extract()?;
+    let rc = conf.repo;
 
     let sha1_promise =
-        switcher::provider::github::get_latest_commit(&conf.owner, &conf.repo, conf.branch);
+        switcher::provider::github::get_latest_commit(&rc.owner, &rc.repo, rc.branch);
     let host_promise = system.get_hostname();
     let user_promise = system.get_username();
     let temp_promise = system.get_tempfldr();
@@ -57,7 +60,7 @@ async fn main() -> Result<()> {
 
     tracing::info!("Building strings");
 
-    let flake_url = format!("github:{}/{}?ref={}", conf.owner, conf.repo, sha1);
+    let flake_url = format!("github:{}/{}?ref={}", rc.owner, rc.repo, sha1);
     let nixos_config = switcher::format_nixos_config(&system, &flake_url, &host).await;
     let nixos_rebuild = format!("{flake_url}#{host}");
     let home_config = format!("{flake_url}#homeConfigurations.{user}@{host}.activationPackage");

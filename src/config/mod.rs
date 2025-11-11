@@ -1,40 +1,47 @@
-use eyre::{OptionExt, Result};
+use eyre::Result;
 use figment::{
     providers::{Env, Format, Json, Serialized, Toml, Yaml},
     Figment,
 };
+use microxdg::XdgApp;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct Config {
+    pub repo: RepoConfig,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct RepoConfig {
     pub owner: String,
     pub repo: String,
     pub branch: Option<String>,
 }
 
 impl Config {
-    // TODO: get rid of deprecated function call (its fine for now as we only target Linuxes)
     #[allow(deprecated)]
-    pub fn figment() -> Result<Figment> {
-        std::env::home_dir()
-            .ok_or_eyre("Unable to read home-directory")
-            .map(|home_folder| {
-                let config_folder = home_folder.join(".config/switcher");
+    pub fn figment(xdg: &XdgApp) -> Result<Figment> {
+        let mut folders = vec![xdg.app_config()?];
+        folders.append(xdg.app_sys_config()?.as_mut());
 
-                // TODO: Follow XDG base directory specification
-                Figment::from(Serialized::defaults(Config::default()))
-                    .merge(Toml::file(config_folder.join("config.toml")))
-                    .merge(Yaml::file(config_folder.join("config.yaml")))
-                    .merge(Yaml::file(config_folder.join("config.yml")))
-                    .merge(Json::file(config_folder.join("config.json")))
-                    .merge(Env::prefixed("SWITCHER_"))
-            })
+        let mut figment = Figment::from(Serialized::defaults(Config::default()));
+
+        for folder in folders {
+            tracing::info!("Considering {:?} for configuration", &folder);
+            figment = figment
+                .merge(Toml::file(folder.join("config.toml")))
+                .merge(Yaml::file(folder.join("config.yaml")))
+                .merge(Yaml::file(folder.join("config.yml")))
+                .merge(Json::file(folder.join("config.json")));
+        }
+
+        Ok(figment.merge(Env::prefixed("SWITCHER_")))
     }
 }
 
-impl Default for Config {
+impl Default for RepoConfig {
     fn default() -> Self {
-        Config {
+        RepoConfig {
             // TODO: find a sensible default, maybe username? Or read from `gh`-CLI?
             owner: "".to_string(),
             repo: "nixos-config".to_string(),
