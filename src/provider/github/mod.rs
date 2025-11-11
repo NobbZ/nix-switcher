@@ -17,7 +17,7 @@ mod latest_commit;
 mod latest_commit_default_branch;
 
 #[instrument]
-pub(crate) async fn get_latest_commit<S1, S2, S3>(
+pub async fn get_latest_commit<S1, S2, S3>(
     owner: S1,
     repo: S2,
     branch: Option<S3>,
