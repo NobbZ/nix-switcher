@@ -35,6 +35,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "55bbe1fa_e57097c0",
+        "filename": "src/config/mod.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T19:10:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "ec7fabae_4b0b74dc",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "6d6c749d_0a8ff66b",
@@ -52,6 +70,24 @@
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     },
     {
+      "unresolved": false,
+      "key": {
+        "uuid": "0128f86f_96c87cd6",
+        "filename": "src/config/mod.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T19:10:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "6d6c749d_0a8ff66b",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
       "unresolved": true,
       "key": {
         "uuid": "a5e5319a_aa9acbbe",
@@ -65,6 +101,24 @@
       "writtenOn": "2025-11-11T18:57:22Z",
       "side": 1,
       "message": "Remove the `dbg!()` call!",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "80a69b37_22bf6090",
+        "filename": "src/main.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T19:10:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "a5e5319a_aa9acbbe",
       "revId": "b728d25489a34e1cde006600c47614d036f10788",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
     }
