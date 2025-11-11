@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, Deserialize, Serialize, Default)]
 pub struct Config {
     pub repo: RepoConfig,
+    pub activators: ActivatorConfig,
 }
 
 #[derive(Debug, PartialEq, Deserialize, Serialize)]
@@ -16,6 +17,12 @@ pub struct RepoConfig {
     pub owner: String,
     pub repo: String,
     pub branch: Option<String>,
+}
+
+#[derive(Debug, PartialEq, Deserialize, Serialize)]
+pub struct ActivatorConfig {
+    pub nixos: Option<bool>,
+    pub home_manager: bool,
 }
 
 impl Config {
@@ -46,6 +53,15 @@ impl Default for RepoConfig {
             owner: "".to_string(),
             repo: "nixos-config".to_string(),
             branch: None,
+        }
+    }
+}
+
+impl Default for ActivatorConfig {
+    fn default() -> Self {
+        ActivatorConfig {
+            nixos: None,
+            home_manager: true,
         }
     }
 }

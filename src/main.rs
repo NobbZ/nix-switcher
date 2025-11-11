@@ -70,26 +70,33 @@ async fn main() -> Result<()> {
     tracing::info!(%flake_url, ?nixos_config, %nixos_rebuild, %home_config, %home_manager, ?out_link, "Built strings");
     tracing::info!("Starting to build");
 
-    switcher::spawn_command(
-        Command::new("nom")
-            .args([
-                "build",
-                "--keep-going",
-                "-L",
-                "--out-link",
-                out_link
-                    .as_os_str()
-                    .to_str()
-                    .wrap_err_with(|| format!("converting {out_link:?} to UTF-8"))?,
-                &home_config,
-            ])
-            .args(nixos_config.as_slice()),
-    )
-    .instrument(tracing::debug_span!("nom_build"))
-    .await?;
+    let nom_args = {
+        let mut res = vec![
+            "build",
+            "--keep-going",
+            "-L",
+            "--out-link",
+            out_link
+                .as_os_str()
+                .to_str()
+                .wrap_err_with(|| format!("converting {out_link:?} to UTF-8"))?,
+        ];
+        if let Some(true) | None = conf.activators.nixos {
+            let mut v: Vec<&str> = nixos_config.iter().map(|s| s.as_str()).collect();
+            res.append(&mut v);
+        }
+        if conf.activators.home_manager {
+            res.push(&home_config);
+        }
+        res
+    };
+
+    switcher::spawn_command(Command::new("nom").args(nom_args))
+        .instrument(tracing::debug_span!("nom_build"))
+        .await?;
 
     tracing::info!("Finished building");
-    if nixos_config.is_some() {
+    if let (Some(true) | None, Some(_)) = (conf.activators.nixos, nixos_config) {
         tracing::info!(%host, "Switching system configuration");
 
         switcher::spawn_command(Command::new("nixos-rebuild").args([
@@ -107,13 +114,15 @@ async fn main() -> Result<()> {
     }
     tracing::info!(%user, %host, "Switching user configuration");
 
-    switcher::spawn_command(Command::new("home-manager").args([
-        "switch",
-        "--flake",
-        &home_manager,
-    ]))
-    .instrument(tracing::debug_span!("home_switch"))
-    .await?;
+    if conf.activators.home_manager {
+        switcher::spawn_command(Command::new("home-manager").args([
+            "switch",
+            "--flake",
+            &home_manager,
+        ]))
+        .instrument(tracing::debug_span!("home_switch"))
+        .await?;
+    }
 
     tracing::info!(%user, %host, "Switched user configuration");
     tracing::info!(%temp, "Cleaning up");
