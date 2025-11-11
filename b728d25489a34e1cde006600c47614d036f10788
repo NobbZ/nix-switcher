@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "unresolved": false,
+      "key": {
+        "uuid": "3e5f3757_eac76492",
+        "filename": "/PATCHSET_LEVEL",
+        "patchSetId": 1
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T18:57:22Z",
+      "side": 1,
+      "message": "There is still some work to do…",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "ec7fabae_4b0b74dc",
+        "filename": "src/config/mod.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T18:57:22Z",
+      "side": 1,
+      "message": "Please get rid of this hardcoded path!",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "6d6c749d_0a8ff66b",
+        "filename": "src/config/mod.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T18:57:22Z",
+      "side": 1,
+      "message": "For some reason `~` doesn\u0027t work correctly, you have to build an absolute path here!",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    },
+    {
+      "unresolved": true,
+      "key": {
+        "uuid": "a5e5319a_aa9acbbe",
+        "filename": "src/main.rs",
+        "patchSetId": 1
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 1039042
+      },
+      "writtenOn": "2025-11-11T18:57:22Z",
+      "side": 1,
+      "message": "Remove the `dbg!()` call!",
+      "revId": "b728d25489a34e1cde006600c47614d036f10788",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735"
+    }
+  ]
+}
