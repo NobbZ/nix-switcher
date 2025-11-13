@@ -49,13 +49,14 @@ async fn main() -> Result<()> {
     let nom_promise = switcher::check_nom();
     let gh_promise = switcher::check_gh();
 
-    let (nom_res, gh_res) = future::join(nom_promise, gh_promise)
-        .instrument(tracing::trace_span!("checking dependencies"))
-        .await;
+    let deps_promise = future::join(nom_promise, gh_promise)
+        .instrument(tracing::trace_span!("checking dependencies"));
+    let info_promise = future::join4(sha1_promise, host_promise, user_promise, temp_promise)
+        .instrument(tracing::trace_span!("gathering info"));
 
-    let (sha1_res, host_res, user_res, temp_res) =
-        future::join4(sha1_promise, host_promise, user_promise, temp_promise)
-            .instrument(tracing::trace_span!("gather_info"))
+    let ((nom_res, gh_res), (sha1_res, host_res, user_res, temp_res)) =
+        future::join(deps_promise, info_promise)
+            .instrument(tracing::trace_span!("awaiting data collection"))
             .await;
 
     let (sha1, host, user, temp, nom, gh) = (
