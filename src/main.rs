@@ -7,8 +7,11 @@ use std::path::Path;
 use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::generate;
+use eyre::ensure;
 use futures::future;
 use microxdg::XdgApp;
+use switcher::interface::Completions;
+use switcher::interface::SubCommand;
 use switcher::interface::SwParser;
 use tokio::{self, process::Command};
 use tracing::Instrument;
@@ -24,14 +27,18 @@ use switcher::system::System;
 async fn main() -> Result<()> {
     let args = <SwParser as Parser>::parse();
 
-    if let Some(shell) = args.completions {
+    color_eyre::install().wrap_err("installing 'color-eyre'")?;
+    FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
+
+    if let Some(SubCommand::Completions(Completions { shell, file })) = args.command {
+        ensure!(
+            file == "-",
+            "Writing completions elsewhere than stdout is currently not supported"
+        );
         let mut app = <SwParser as CommandFactory>::command();
         generate(shell, &mut app, "switcher", &mut io::stdout());
         return Ok(());
     }
-
-    color_eyre::install().wrap_err("installing 'color-eyre'")?;
-    FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
 
     tracing::info!("Gathering info");
 
