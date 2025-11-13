@@ -1,10 +1,15 @@
 #![warn(clippy::unwrap_used)]
 
 use core::panic;
+use std::io;
 use std::path::Path;
 
+use clap::CommandFactory;
+use clap::Parser;
+use clap_complete::generate;
 use futures::future;
 use microxdg::XdgApp;
+use switcher::interface::SwParser;
 use tokio::{self, process::Command};
 use tracing::Instrument;
 use tracing::Level;
@@ -17,6 +22,14 @@ use switcher::system::System;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let args = <SwParser as Parser>::parse();
+
+    if let Some(shell) = args.completions {
+        let mut app = <SwParser as CommandFactory>::command();
+        generate(shell, &mut app, "switcher", &mut io::stdout());
+        return Ok(());
+    }
+
     color_eyre::install().wrap_err("installing 'color-eyre'")?;
     FmtSubscriber::builder().with_max_level(Level::DEBUG).init();
 

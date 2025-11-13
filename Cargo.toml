@@ -27,6 +27,8 @@ async-trait = "0.1.89"
 mockall_double = "0.3.1"
 figment = { version = "0.10.19", features = ["test", "env", "toml", "json", "yaml"] }
 microxdg = "0.2.0"
+clap = { version = "4.5.51", features = ["derive", "cargo"] }
+clap_complete = "4.5.60"
 
 [dependencies.tokio]
 version = "1"

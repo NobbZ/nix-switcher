@@ -11,6 +11,7 @@ use crate::provider::github;
 use crate::system::System;
 
 pub mod config;
+pub mod interface;
 pub mod provider;
 pub mod system;
 
