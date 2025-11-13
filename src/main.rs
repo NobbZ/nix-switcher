@@ -7,8 +7,11 @@ use std::path::Path;
 use clap::CommandFactory;
 use clap::Parser;
 use clap_complete::generate;
+use eyre::ensure;
 use futures::future;
 use microxdg::XdgApp;
+use switcher::interface::Completions;
+use switcher::interface::SubCommand;
 use switcher::interface::SwParser;
 use tokio::{self, process::Command};
 use tracing::Instrument;
@@ -24,7 +27,11 @@ use switcher::system::System;
 async fn main() -> Result<()> {
     let args = <SwParser as Parser>::parse();
 
-    if let Some(shell) = args.completions {
+    if let Some(SubCommand::Completions(Completions { shell, file })) = args.command {
+        ensure!(
+            file == "-",
+            "Writing completions elsewhere than stdout is currently not supported"
+        );
         let mut app = <SwParser as CommandFactory>::command();
         generate(shell, &mut app, "switcher", &mut io::stdout());
         return Ok(());
