@@ -1,27 +1,19 @@
 #![warn(clippy::unwrap_used)]
 
 use core::panic;
-use std::io;
-use std::path::Path;
+use std::{io, path::Path};
 
-use clap::CommandFactory;
-use clap::Parser;
+use clap::{CommandFactory, Parser};
 use clap_complete::generate;
-use eyre::ensure;
+use eyre::{ensure, ContextCompat, Result, WrapErr};
 use futures::future;
 use microxdg::XdgApp;
-use switcher::interface::Completions;
-use switcher::interface::SubCommand;
-use switcher::interface::SwParser;
+use switcher::{
+    config::Config, interface::{Completions, SubCommand, SwParser}, system::System
+};
 use tokio::{self, process::Command};
-use tracing::Instrument;
-use tracing::Level;
+use tracing::{Instrument, Level};
 use tracing_subscriber::FmtSubscriber;
-
-use eyre::{ContextCompat, Result, WrapErr};
-
-use switcher::config::Config;
-use switcher::system::System;
 
 #[tokio::main]
 async fn main() -> Result<()> {

@@ -30,6 +30,7 @@
         ];
 
         rust = pkgs.rust-bin.stable.${rustVersion}.default;
+        rustfmt = pkgs.rust-bin.nightly.latest.rustfmt;
 
         rustPlatform = pkgs.makeRustPlatform {
           rustc = rust;
@@ -44,7 +45,7 @@
         packages.default = self'.packages.switcher;
 
         devShells.default = pkgs.mkShell {
-          packages = builtins.attrValues {
+          packages = [rustfmt] ++ builtins.attrValues {
             inherit (pkgs) cargo-nextest cargo-audit cargo-deny cargo-tarpaulin rust-analyzer;
             inherit (pkgs) nil pkg-config openssl bacon;
             inherit rust;
