@@ -1,7 +1,6 @@
 use eyre::Result;
 use figment::{
-    providers::{Env, Format, Json, Serialized, Toml, Yaml},
-    Figment,
+    providers::{Env, Format, Json, Serialized, Toml, Yaml}, Figment
 };
 use microxdg::XdgApp;
 use serde::{Deserialize, Serialize};

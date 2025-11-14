@@ -3,8 +3,7 @@ use std::fmt::Debug;
 
 use eyre::{Context, Result};
 use reqwest::{
-    header::{HeaderMap, HeaderValue},
-    Client,
+    header::{HeaderMap, HeaderValue}, Client
 };
 use tokio::process::Command;
 use tracing::instrument;
