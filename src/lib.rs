@@ -1,10 +1,9 @@
 use std::process::ExitStatus;
 
+use eyre::{Result, WrapErr};
 use mockall_double::double;
 use tokio::{self, process::Command};
 use tracing::instrument;
-
-use eyre::{Result, WrapErr};
 
 use crate::provider::github;
 #[double]

@@ -1,13 +1,11 @@
 use std::fmt::Debug;
 
 use eyre::{anyhow, Result};
-use graphql_client::reqwest::post_graphql;
-use graphql_client::GraphQLQuery;
+use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::Client;
 use tracing::instrument;
 
-use super::GitObjectID;
-use super::ENDPOINT;
+use super::{GitObjectID, ENDPOINT};
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -29,8 +27,9 @@ where
     S2: AsRef<str> + Debug,
     S3: AsRef<str> + Debug,
 {
-    use latest_commit::LatestCommitRepositoryRefTarget::Commit;
-    use latest_commit::LatestCommitRepositoryRefTargetOnCommit as TargetOnCommit;
+    use latest_commit::{
+        LatestCommitRepositoryRefTarget::Commit, LatestCommitRepositoryRefTargetOnCommit as TargetOnCommit
+    };
 
     let variables = latest_commit::Variables {
         repo: repo.as_ref().into(),

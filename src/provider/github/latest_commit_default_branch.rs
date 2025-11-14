@@ -4,8 +4,7 @@ use eyre::{anyhow, Result};
 use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::Client;
 
-use super::GitObjectID;
-use super::ENDPOINT;
+use super::{GitObjectID, ENDPOINT};
 
 #[derive(GraphQLQuery)]
 #[graphql(
@@ -20,8 +19,9 @@ where
     S1: AsRef<str> + Debug,
     S2: AsRef<str> + Debug,
 {
-    use latest_commit_default_branch::LatestCommitDefaultBranchRepositoryDefaultBranchRefTarget::Commit;
-    use latest_commit_default_branch::LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit as TargetOnCommit;
+    use latest_commit_default_branch::{
+        LatestCommitDefaultBranchRepositoryDefaultBranchRefTarget::Commit, LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit as TargetOnCommit
+    };
 
     let variables = latest_commit_default_branch::Variables {
         repo: repo.as_ref().into(),
