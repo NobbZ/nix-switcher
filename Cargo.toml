@@ -29,6 +29,7 @@ figment = { version = "0.10.19", features = ["test", "env", "toml", "json", "yam
 microxdg = "0.2.0"
 clap = { version = "4.5.51", features = ["derive", "cargo"] }
 clap_complete = "4.5.60"
+thiserror = "2.0.17"
 
 [dependencies.tokio]
 version = "1"

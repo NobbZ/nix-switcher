@@ -1,13 +1,13 @@
 use std::process::ExitStatus;
 
-use eyre::{Result, WrapErr};
+use eyre::{Report, WrapErr};
 use mockall_double::double;
 use tokio::{self, process::Command};
 use tracing::instrument;
 
-use crate::provider::github;
 #[double]
 use crate::system::System;
+use crate::{provider::github, system::SystemError};
 
 pub mod config;
 pub mod interface;
@@ -15,7 +15,7 @@ pub mod provider;
 pub mod system;
 
 #[instrument]
-async fn get_command_out(cmd: &mut Command) -> Result<String> {
+async fn get_command_out(cmd: &mut Command) -> Result<String, SystemError> {
     let system = System::default();
 
     system.get_command_out(cmd).await
@@ -27,7 +27,7 @@ async fn get_command_out(cmd: &mut Command) -> Result<String> {
 ///
 /// Returns an `Err` if spawning the command failed.
 #[instrument]
-pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus> {
+pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus, Report> {
     Ok(cmd.spawn().wrap_err("spawing the command")?.wait().await?)
 }
 
@@ -37,7 +37,7 @@ pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus> {
 ///
 /// Returns an `Err` if the latest commits SHA couldn't be retrieved.
 #[instrument]
-pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<String> {
+pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<String, Report> {
     github::get_latest_commit(owner, repo, Some(branch)).await
 }
 
@@ -47,10 +47,9 @@ pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<Strin
 ///
 /// Returns an `Err` if there was a problem calling `which`.
 #[instrument]
-pub async fn check_nom() -> Result<Option<String>> {
-    let location = get_command_out(Command::new("which").arg("nom"))
-        .await
-        .wrap_err("searching for `nom`")?;
+pub async fn check_nom() -> Result<Option<String>, SystemError> {
+    let location = get_command_out(Command::new("which").arg("nom")).await?;
+    // .wrap_err("searching for `nom`")?;
 
     if location.is_empty() {
         return Ok(None);
@@ -65,10 +64,9 @@ pub async fn check_nom() -> Result<Option<String>> {
 ///
 /// Returns an `Err` if there was a problem calling `which`.
 #[instrument]
-pub async fn check_gh() -> Result<Option<String>> {
-    let location = get_command_out(Command::new("which").arg("gh"))
-        .await
-        .wrap_err("searching for `gh`")?;
+pub async fn check_gh() -> Result<Option<String>, SystemError> {
+    let location = get_command_out(Command::new("which").arg("gh")).await?;
+    // .wrap_err("searching for `gh`")?;
 
     if location.is_empty() {
         return Ok(None);

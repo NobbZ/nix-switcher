@@ -1,12 +1,26 @@
-use std::path::Path;
+use std::{io::Error as IoError, path::Path, str::Utf8Error};
 
-use eyre::{Context, Result};
 use mockall::automock;
+use thiserror::Error;
 use tokio::process::Command;
 use tracing::instrument;
 
 #[derive(Default)]
 pub struct System {}
+
+#[derive(Error, Debug)]
+pub enum SystemError {
+    #[error("Can not retrieve the hostname")]
+    HostnameError(#[source] Box<SystemError>),
+    #[error("Can not run command `{:?}`", .0)]
+    CommandError(String, #[source] IoError),
+    #[error("Can not convert input to UTF-8: {:?}", .0)]
+    StringConversionError(Vec<u8>, #[source] Utf8Error),
+    #[error("Can not create temporary folder")]
+    MkTempError(#[source] Box<SystemError>),
+    #[error("Can not retrieve username")]
+    UsernameError(#[source] Box<SystemError>),
+}
 
 #[automock]
 impl System {
@@ -14,51 +28,61 @@ impl System {
     ///
     /// # Errors
     ///
-    /// Will return an `Err` if there was a problem retrieving the hostname.
+    /// Returns a `SystemError::HostnameError` if the hostname couldn't be
+    /// retrieved.
     #[instrument(skip(self))]
-    pub async fn get_hostname(&self) -> Result<String> {
+    pub async fn get_hostname(&self) -> Result<String, SystemError> {
         self.get_command_out(&mut Command::new("hostname"))
             .await
-            .wrap_err("retrieving the hostname")
+            .map_err(|err| SystemError::HostnameError(Box::new(err)))
     }
 
     /// Retrieves the current users username.
     ///
     /// # Errors
     ///
-    /// Will return an `Err` if there was a problem retrieving the username.
+    /// Returns a `SystemError::UsernameError` if the username couldn't be
+    /// retrieved.
     #[instrument(skip(self))]
-    pub async fn get_username(&self) -> Result<String> {
+    pub async fn get_username(&self) -> Result<String, SystemError> {
         self.get_command_out(&mut Command::new("whoami"))
             .await
-            .wrap_err("retrieving the current username")
+            .map_err(|err| SystemError::UsernameError(Box::new(err)))
     }
 
     /// Creates a temporary folder and returns its location in the file system as a `String`.
     ///
     /// # Errors
     ///
-    /// Returns an `Err` if there was an error when calling the underlying system commands.
+    /// Returns a `SystemError::MkTempError` if the temporary folder couldn't be
+    /// created.
     #[instrument(skip(self))]
-    pub async fn get_tempfldr(&self) -> Result<String> {
+    pub async fn get_tempfldr(&self) -> Result<String, SystemError> {
         self.get_command_out(Command::new("mktemp").arg("-d"))
             .await
-            .wrap_err("creating the temporary folder")
+            .map_err(|err| SystemError::MkTempError(Box::new(err)))
     }
 
     /// Runs an arbitrary command and returns the output as a `String`.
     ///
     /// # Errors
     ///
-    /// Returns an error if there was a problem running the given program.
+    /// Returns one of the following errors:
+    ///
+    /// - `SystemError::CommandError` if there have been troubles running `cmd`
+    /// - `SystemError::StringConversionError` if there have been troubles converting the output to
+    ///    UTF-8
     #[instrument(skip(self))]
-    pub async fn get_command_out(&self, cmd: &mut Command) -> Result<String> {
-        let out = cmd.output().await.wrap_err("running the command")?.stdout;
-
-        Ok(std::str::from_utf8(&out)
-            .wrap_err("converting the output to UTF-8")?
-            .trim()
-            .to_string())
+    pub async fn get_command_out(&self, cmd: &mut Command) -> Result<String, SystemError> {
+        cmd.output()
+            .await
+            .map_err(|err| SystemError::CommandError(format!("{cmd:?}"), err))
+            .map(|out| out.stdout)
+            .and_then(|out| {
+                std::str::from_utf8(&out)
+                    .map_err(|err| SystemError::StringConversionError(out.clone(), err))
+                    .map(Into::into)
+            })
     }
 
     #[instrument(skip(self))]
