@@ -5,10 +5,11 @@ use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::Client;
 use tracing::instrument;
 
-use self::latest_commit::{
-    LatestCommitRepositoryRefTarget::Commit, LatestCommitRepositoryRefTargetOnCommit as TargetOnCommit
+use crate::provider::github::{
+    latest_commit::latest_commit::{
+        LatestCommitRepositoryRefTarget::Commit, LatestCommitRepositoryRefTargetOnCommit as TargetOnCommit
+    }, GitObjectID, ENDPOINT
 };
-use super::{GitObjectID, ENDPOINT};
 
 #[derive(GraphQLQuery)]
 #[graphql(

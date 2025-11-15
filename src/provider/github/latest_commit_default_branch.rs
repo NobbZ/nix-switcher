@@ -4,10 +4,11 @@ use eyre::{anyhow, Result};
 use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::Client;
 
-use self::latest_commit_default_branch::{
-    LatestCommitDefaultBranchRepositoryDefaultBranchRefTarget::Commit, LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit as TargetOnCommit
+use crate::provider::github::{
+    latest_commit_default_branch::latest_commit_default_branch::{
+        LatestCommitDefaultBranchRepositoryDefaultBranchRefTarget::Commit, LatestCommitDefaultBranchRepositoryDefaultBranchRefTargetOnCommit as TargetOnCommit
+    }, GitObjectID, ENDPOINT
 };
-use super::{GitObjectID, ENDPOINT};
 
 #[derive(GraphQLQuery)]
 #[graphql(
