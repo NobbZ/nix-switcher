@@ -1,4 +1,4 @@
-use std::{io::Error as IoError, path::Path, str::Utf8Error};
+use std::{io::Error as IoError, path::Path, process::ExitStatus, str::Utf8Error};
 
 use mockall::automock;
 use thiserror::Error;
@@ -88,6 +88,14 @@ impl System {
     #[instrument(skip(self))]
     pub async fn is_nixos(&self) -> bool {
         Path::new("/etc/NIXOS").exists()
+    }
+
+    pub async fn spawn_command(&self, cmd: &mut Command) -> Result<ExitStatus, SystemError> {
+        cmd.spawn()
+            .map_err(|err| SystemError::CommandError(format!("{cmd:?}"), err))?
+            .wait()
+            .await
+            .map_err(|err| SystemError::CommandError(format!("{cmd:?}"), err))
     }
 }
 

@@ -104,7 +104,8 @@ async fn main() -> Result<()> {
         res
     };
 
-    switcher::spawn_command(Command::new("nom").args(nom_args))
+    system
+        .spawn_command(Command::new("nom").args(nom_args))
         .instrument(tracing::debug_span!("nom_build"))
         .await?;
 
@@ -112,14 +113,15 @@ async fn main() -> Result<()> {
     if let (Some(true) | None, Some(_)) = (conf.activators.nixos, nixos_config) {
         tracing::info!(%host, "Switching system configuration");
 
-        switcher::spawn_command(Command::new("nixos-rebuild").args([
-            "switch",
-            "--use-remote-sudo",
-            "--flake",
-            &nixos_rebuild,
-        ]))
-        .instrument(tracing::debug_span!("nixos_switch"))
-        .await?;
+        system
+            .spawn_command(Command::new("nixos-rebuild").args([
+                "switch",
+                "--use-remote-sudo",
+                "--flake",
+                &nixos_rebuild,
+            ]))
+            .instrument(tracing::debug_span!("nixos_switch"))
+            .await?;
 
         tracing::info!(%host, "Switched system configuration");
     } else {
@@ -128,19 +130,18 @@ async fn main() -> Result<()> {
     tracing::info!(%user, %host, "Switching user configuration");
 
     if conf.activators.home_manager {
-        switcher::spawn_command(Command::new("home-manager").args([
-            "switch",
-            "--flake",
-            &home_manager,
-        ]))
-        .instrument(tracing::debug_span!("home_switch"))
-        .await?;
+        system
+            .spawn_command(Command::new("home-manager").args(["switch", "--flake", &home_manager]))
+            .instrument(tracing::debug_span!("home_switch"))
+            .await?;
     }
 
     tracing::info!(%user, %host, "Switched user configuration");
     tracing::info!(%temp, "Cleaning up");
 
-    switcher::spawn_command(Command::new("rm").args(["-rfv", &temp])).await?;
+    system
+        .spawn_command(Command::new("rm").args(["-rfv", &temp]))
+        .await?;
 
     Ok(())
 }

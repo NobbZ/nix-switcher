@@ -1,6 +1,4 @@
-use std::process::ExitStatus;
-
-use eyre::{Report, WrapErr};
+use eyre::Report;
 use mockall_double::double;
 use tokio::{self, process::Command};
 use tracing::instrument;
@@ -19,16 +17,6 @@ async fn get_command_out(cmd: &mut Command) -> Result<String, SystemError> {
     let system = System::default();
 
     system.get_command_out(cmd).await
-}
-
-/// Spawns the given command.
-///
-/// # Errors
-///
-/// Returns an `Err` if spawning the command failed.
-#[instrument]
-pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus, Report> {
-    Ok(cmd.spawn().wrap_err("spawing the command")?.wait().await?)
 }
 
 /// Retrieves the SHA1 of the latest commit on the configured branch.
