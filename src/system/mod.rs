@@ -85,6 +85,24 @@ impl System {
             })
     }
 
+    /// Searches for a given program in the `PATH` variable.
+    #[instrument(skip(self))]
+    pub async fn which(&self, prg: &str) -> Result<Option<String>, SystemError> {
+        self.get_command_out(Command::new("which").arg(prg))
+            .await
+            .map(|s| (!s.is_empty()).then_some(s))
+    }
+
+    /// Tries to find the `nom` executable
+    pub async fn find_nom(&self) -> Result<Option<String>, SystemError> {
+        self.which("nom").await
+    }
+
+    /// Tries to find the `gh` executable
+    pub async fn find_gh(&self) -> Result<Option<String>, SystemError> {
+        self.which("gh").await
+    }
+
     #[instrument(skip(self))]
     pub async fn is_nixos(&self) -> bool {
         Path::new("/etc/NIXOS").exists()
