@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use eyre::{anyhow, Result};
+use eyre::{eyre, Result};
 use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::Client;
 
@@ -31,13 +31,13 @@ where
     let data = post_graphql::<LatestCommitDefaultBranch, _>(client, ENDPOINT, variables)
         .await?
         .data
-        .ok_or_else(|| anyhow!("missing in response: data"))?;
+        .ok_or_else(|| eyre!("missing in response: data"))?;
 
     let default_branch_ref = data
         .repository
-        .ok_or_else(|| anyhow!("missing in response: repository"))?
+        .ok_or_else(|| eyre!("missing in response: repository"))?
         .default_branch_ref
-        .ok_or_else(|| anyhow!("missing in response: ref"))?;
+        .ok_or_else(|| eyre!("missing in response: ref"))?;
 
     let id = default_branch_ref.id;
 
@@ -45,12 +45,12 @@ where
 
     let target = default_branch_ref
         .target
-        .ok_or_else(|| anyhow!("missing in response: target"))?;
+        .ok_or_else(|| eyre!("missing in response: target"))?;
 
     if let Commit(TargetOnCommit { oid }) = target {
         tracing::debug!(%id, branch = name, sha1 = oid, "Found commit SHA1");
         Ok(oid)
     } else {
-        Err(anyhow!("Not a commit: {:?}", target))
+        Err(eyre!("Not a commit: {:?}", target))
     }
 }

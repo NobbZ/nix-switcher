@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use eyre::{anyhow, Result};
+use eyre::{eyre, Result};
 use graphql_client::{reqwest::post_graphql, GraphQLQuery};
 use reqwest::Client;
 use tracing::instrument;
@@ -42,22 +42,22 @@ where
         .data;
 
     let ref_ = data
-        .ok_or_else(|| anyhow!("missing in response: data"))?
+        .ok_or_else(|| eyre!("missing in response: data"))?
         .repository
-        .ok_or_else(|| anyhow!("missing in response: repository"))?
+        .ok_or_else(|| eyre!("missing in response: repository"))?
         .ref_
-        .ok_or_else(|| anyhow!("missing in response: ref"))?;
+        .ok_or_else(|| eyre!("missing in response: ref"))?;
 
     let id = ref_.id;
 
     let target = ref_
         .target
-        .ok_or_else(|| anyhow!("missing in response: target"))?;
+        .ok_or_else(|| eyre!("missing in response: target"))?;
 
     if let Commit(TargetOnCommit { oid }) = target {
         tracing::debug!(%id, sha1 = oid, "Found commit SHA1");
         Ok(oid)
     } else {
-        Err(anyhow!("Not a commit: {:?} for id {}", target, id))
+        Err(eyre!("Not a commit: {:?} for id {}", target, id))
     }
 }
