@@ -45,8 +45,8 @@ async fn main() -> Result<()> {
     let host_promise = system.get_hostname();
     let user_promise = system.get_username();
     let temp_promise = system.get_tempfldr();
-    let nom_promise = switcher::check_nom();
-    let gh_promise = switcher::check_gh();
+    let nom_promise = system.find_nom();
+    let gh_promise = system.find_gh();
 
     let deps_promise = future::join(nom_promise, gh_promise)
         .instrument(tracing::trace_span!("checking dependencies"));

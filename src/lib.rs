@@ -5,21 +5,14 @@ use mockall_double::double;
 use tokio::{self, process::Command};
 use tracing::instrument;
 
+use crate::provider::github;
 #[double]
 use crate::system::System;
-use crate::{provider::github, system::SystemError};
 
 pub mod config;
 pub mod interface;
 pub mod provider;
 pub mod system;
-
-#[instrument]
-async fn get_command_out(cmd: &mut Command) -> Result<String, SystemError> {
-    let system = System::default();
-
-    system.get_command_out(cmd).await
-}
 
 /// Spawns the given command.
 ///
@@ -39,40 +32,6 @@ pub async fn spawn_command(cmd: &mut Command) -> Result<ExitStatus, Report> {
 #[instrument]
 pub async fn retrieve_sha(owner: &str, repo: &str, branch: &str) -> Result<String, Report> {
     github::get_latest_commit(owner, repo, Some(branch)).await
-}
-
-/// Checks whether the `nom` binary is in `PATH`.
-///
-/// # Errors
-///
-/// Returns an `Err` if there was a problem calling `which`.
-#[instrument]
-pub async fn check_nom() -> Result<Option<String>, SystemError> {
-    let location = get_command_out(Command::new("which").arg("nom")).await?;
-    // .wrap_err("searching for `nom`")?;
-
-    if location.is_empty() {
-        return Ok(None);
-    }
-
-    Ok(Some(location))
-}
-
-/// Checks whether `gh` is in `PATH`.
-///
-/// # Errors
-///
-/// Returns an `Err` if there was a problem calling `which`.
-#[instrument]
-pub async fn check_gh() -> Result<Option<String>, SystemError> {
-    let location = get_command_out(Command::new("which").arg("gh")).await?;
-    // .wrap_err("searching for `gh`")?;
-
-    if location.is_empty() {
-        return Ok(None);
-    }
-
-    Ok(Some(location))
 }
 
 #[instrument(skip(system))]
