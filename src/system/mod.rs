@@ -81,7 +81,7 @@ impl System {
             .and_then(|out| {
                 std::str::from_utf8(&out)
                     .map_err(|err| SystemError::StringConversionError(out.clone(), err))
-                    .map(Into::into)
+                    .map(|s| s.trim().into())
             })
     }
 
