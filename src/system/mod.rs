@@ -32,7 +32,12 @@ impl System {
     /// retrieved.
     #[instrument(skip(self))]
     pub async fn get_hostname(&self) -> Result<String, SystemError> {
-        self.get_command_out(&mut Command::new("hostname"))
+        #[cfg(target_os = "linux")]
+        let mut cmd = Command::new("hostname");
+        #[cfg(target_os = "macos")]
+        let mut cmd = Command::new("hostname").arg("-s");
+
+        self.get_command_out(&mut cmd)
             .await
             .map_err(|err| SystemError::HostnameError(Box::new(err)))
     }
