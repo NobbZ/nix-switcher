@@ -76,7 +76,7 @@ async fn main() -> Result<()> {
     let flake_url = format!("github:{}/{}?ref={}", rc.owner, rc.repo, sha1);
     let nixos_config = switcher::format_nixos_config(&system, &flake_url, &host).await;
     let nixos_rebuild = format!("{flake_url}#{host}");
-    let home_config = format!("{flake_url}#homeConfigurations.{user}@{host}.activationPackage");
+    let home_config = format!("{flake_url}#homeConfigurations.\"{user}@{host}\".activationPackage");
     let home_manager = format!("{flake_url}#{user}@{host}");
     let out_link = Path::new(&temp).join("result");
 
