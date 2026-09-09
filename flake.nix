@@ -47,7 +47,7 @@
         devShells.default = pkgs.mkShell {
           packages = [rustfmt] ++ builtins.attrValues {
             inherit (pkgs) cargo-nextest cargo-audit cargo-deny cargo-tarpaulin rust-analyzer;
-            inherit (pkgs) nil pkg-config openssl bacon;
+            inherit (pkgs) nil pkg-config openssl bacon opencode;
             inherit rust;
           };
         };
