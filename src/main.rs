@@ -116,7 +116,7 @@ async fn main() -> Result<()> {
         system
             .spawn_command(Command::new("nixos-rebuild").args([
                 "switch",
-                "--use-remote-sudo",
+                "--elevate=sudo",
                 "--flake",
                 &nixos_rebuild,
             ]))
