@@ -6,4 +6,4 @@ components = [
     "rustfmt",
     "clippy",
 ]
-channel = "1.83.0"
+channel = "1.88.0"
